@@ -1,0 +1,263 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isAdmin() {
+      return isAuthenticated() && getRole() == 'admin';
+    }
+    function isCompany() {
+      return isAuthenticated() && getRole() == 'company';
+    }
+    
+    function getAssessmentPassingScore(assessmentId) {
+      let data = get(/databases/$(database)/documents/assessments/$(assessmentId)).data;
+      return ('passingScore' in data) ? data.passingScore : 70;
+    }
+    
+    // USERS collection: users can read and write their own document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // STUDENT PROFILES collection
+    match /studentProfiles/{userId} {
+      // Students can read/write their own profile
+      allow write: if isOwner(userId) && getRole() == 'student';
+      // Companies can read all student profiles, students can read their own
+      allow read: if isAuthenticated() && (getRole() == 'company' || isOwner(userId));
+    }
+    
+    // COMPANY PROFILES collection
+    match /companyProfiles/{userId} {
+      // Companies can read/write their own profile
+      allow write: if isOwner(userId) && getRole() == 'company';
+      // Anyone authenticated can read company profiles
+      allow read: if isAuthenticated();
+    }
+    
+    // VERIFIED SKILL SCORES collection
+    match /skillScores/{docId} {
+      allow read: if isAuthenticated();
+      // Allow students to write their own skill scores, provided they point to a valid attempt
+      // Also allow admins to write them directly when evaluating practical tasks
+      allow write: if isAdmin() || (isOwner(request.resource.data.studentId) 
+                   && docId == request.resource.data.studentId + "_" + request.resource.data.skillId
+                   && (
+                     request.resource.data.theoryScore == null || 
+                     (
+                       request.resource.data.highestTheoryAttemptId != null &&
+                       get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.studentId == request.resource.data.studentId &&
+                       get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.skillId == request.resource.data.skillId &&
+                       get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.percentage == request.resource.data.theoryScore
+                     )
+                   )
+                   && (
+                     !('practicalScore' in request.resource.data) || request.resource.data.practicalScore == null || 
+                     (
+                       request.resource.data.highestPracticalAttemptId != null &&
+                       get(/databases/$(database)/documents/practicalTaskAttempts/$(request.resource.data.highestPracticalAttemptId)).data.studentId == request.resource.data.studentId &&
+                       get(/databases/$(database)/documents/practicalTaskAttempts/$(request.resource.data.highestPracticalAttemptId)).data.skillId == request.resource.data.skillId &&
+                       get(/databases/$(database)/documents/practicalTaskAttempts/$(request.resource.data.highestPracticalAttemptId)).data.evaluation.percentage == request.resource.data.practicalScore
+                     )
+                   )
+                   && (
+                     !('overallScore' in request.resource.data) || request.resource.data.overallScore == null ||
+                     (
+                       (request.resource.data.theoryScore != null && request.resource.data.practicalScore != null && request.resource.data.overallScore == (request.resource.data.theoryScore + request.resource.data.practicalScore) / 2.0) ||
+                       (request.resource.data.theoryScore != null && ( !('practicalScore' in request.resource.data) || request.resource.data.practicalScore == null) && request.resource.data.overallScore == request.resource.data.theoryScore) ||
+                       ((!('theoryScore' in request.resource.data) || request.resource.data.theoryScore == null) && request.resource.data.practicalScore != null && request.resource.data.overallScore == request.resource.data.practicalScore)
+                     )
+                   )
+                   // SECURITY FIX: Prevent forging projectEvidence
+                   && (
+                     (resource == null && !('projectEvidence' in request.resource.data)) ||
+                     (resource != null && (
+                       !('projectEvidence' in request.resource.data) || 
+                       request.resource.data.projectEvidence == resource.data.projectEvidence
+                     ))
+                   )
+                   // SECURITY FIX: Validate isVerified
+                   && (
+                     !('isVerified' in request.resource.data) || 
+                     request.resource.data.isVerified == false ||
+                     (
+                       request.resource.data.highestTheoryAttemptId != null &&
+                       get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.percentage >= getAssessmentPassingScore(get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.assessmentId)
+                     )
+                   );
+    }
+    
+    // ASSESSMENTS / TASKS collection
+    match /practicalTasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // COMPANY CHALLENGES
+    match /companyChallenges/{challengeId} {
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student' && resource.data.status == 'published');
+      // Companies can create challenges
+      allow create: if isAuthenticated() && getRole() == 'company' && request.resource.data.companyId == request.auth.uid;
+      // Companies can update their own challenges
+      allow update, delete: if isAuthenticated() && getRole() == 'company' && resource.data.companyId == request.auth.uid;
+    }
+    
+    // CHALLENGE CONFIGURATIONS
+    match /challengeTheoryConfiguration/{configId} {
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student');
+      allow create: if isAuthenticated() && getRole() == 'company'; // We check in UI and functions usually, but we could enforce company ownership if it had companyId. We'll rely on challenge ownership indirectly or add companyId. We'll allow companies to create/update.
+      allow update, delete: if isAuthenticated() && getRole() == 'company';
+    }
+
+    match /challengePracticalTasks/{taskId} {
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student');
+      allow create, update, delete: if isAuthenticated() && getRole() == 'company';
+    }
+
+    match /challengeInterviewQuestions/{questionId} {
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student');
+      allow create, update, delete: if isAuthenticated() && getRole() == 'company';
+    }
+    
+    // APPLICATIONS
+    match /applications/{applicationId} {
+      // Students can create applications for themselves
+      allow create: if isAuthenticated() && getRole() == 'student' && request.resource.data.studentId == request.auth.uid;
+      // Students can read their own applications
+      // Companies can read applications for their own challenges
+      allow read: if isAuthenticated() && (
+        (getRole() == 'student' && resource.data.studentId == request.auth.uid) ||
+        (getRole() == 'company' && resource.data.companyId == request.auth.uid)
+      );
+      // Only companies can update application status
+      allow update: if isAuthenticated() && getRole() == 'company' && resource.data.companyId == request.auth.uid;
+    }
+    
+    // CHALLENGE APPLICATIONS (Phase 5C)
+    match /challengeApplications/{appId} {
+      // Students can create applications for themselves
+      allow create: if isAuthenticated() && getRole() == 'student' && request.resource.data.studentId == request.auth.uid;
+      // Students can read their own, companies can read applications for their challenges, admins can read all
+      allow read: if isAdmin() || (isAuthenticated() && (
+        (getRole() == 'student' && resource.data.studentId == request.auth.uid) ||
+        (getRole() == 'company' && resource.data.companyId == request.auth.uid)
+      ));
+      // Students can update their own progress. Companies can update status.
+      allow update: if isAuthenticated() && (
+        (
+          getRole() == 'student' && 
+          resource.data.studentId == request.auth.uid && 
+          request.resource.data.studentId == request.auth.uid && 
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['companyId', 'studentId', 'challengeId', 'practicalScore', 'interviewScore', 'overallScore']) &&
+          (!('status' in request.resource.data) || !(request.resource.data.status in ['shortlisted', 'rejected']))
+        ) ||
+        (getRole() == 'company' && resource.data.companyId == request.auth.uid)
+      );
+    }
+
+    // PHASE 2: THEORY ASSESSMENTS
+
+    // SKILLS
+    match /skills/{skillId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ASSESSMENTS
+    match /assessments/{assessmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ASSESSMENT QUESTIONS
+    match /assessmentQuestions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ASSESSMENT ATTEMPTS
+    match /assessmentAttempts/{attemptId} {
+      // Students can read their own, admins can read all (companies read aggregated via skillScores)
+      allow read: if isAuthenticated() && (resource.data.studentId == request.auth.uid || isAdmin());
+      // Students can write their own attempts
+      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.studentId == request.auth.uid && request.resource.data.studentId == request.auth.uid;
+    }
+
+    // PRACTICAL TASK ATTEMPTS
+    match /practicalTaskAttempts/{attemptId} {
+      // Students can read their own, admins can read all
+      allow read: if isAuthenticated() && (resource.data.studentId == request.auth.uid || isAdmin());
+      // Students can create their own attempts (without an evaluation)
+      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid && !('evaluation' in request.resource.data);
+      // Students can update their submission (but not the evaluation). Admins can update evaluations.
+      allow update: if isAuthenticated() && (
+        (resource.data.studentId == request.auth.uid && request.resource.data.studentId == request.auth.uid && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['evaluation']))) ||
+        (isAdmin())
+      );
+    }
+    
+    // PHASE 8A: CODING PRACTICE
+
+    // PRACTICE PROBLEMS
+    match /practiceProblems/{problemId} {
+      // Students can read active problems, admins can read all
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'student' && resource.data.active == true);
+      // Admins can manage practice problems
+      allow write: if isAdmin();
+      
+      // TEST CASES (Hidden and Public)
+      match /testCases/{testCaseId} {
+        // Students can only read public test cases. Admins can read all.
+        allow read: if isAdmin() || (isAuthenticated() && getRole() == 'student' && resource.data.isHidden == false);
+        allow write: if isAdmin();
+      }
+    }
+
+    // PRACTICE ATTEMPTS
+    match /practiceAttempts/{attemptId} {
+      // Students can read their own, admins can read all (Companies do not need access)
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+      // Students can create their own practice attempts (but cannot forge executable results)
+      allow create: if isAuthenticated() && getRole() == 'student' && request.resource.data.studentId == request.auth.uid
+                    && !('resultStatus' in request.resource.data)
+                    && !('passedTests' in request.resource.data)
+                    && !('executionTimeMs' in request.resource.data);
+      // Students can update their own practice attempts
+      allow update: if isAuthenticated() && getRole() == 'student' && resource.data.studentId == request.auth.uid && request.resource.data.studentId == request.auth.uid
+                    && !('resultStatus' in request.resource.data.diff(resource.data).affectedKeys())
+                    && !('passedTests' in request.resource.data.diff(resource.data).affectedKeys())
+                    && !('executionTimeMs' in request.resource.data.diff(resource.data).affectedKeys());
+      // Admins can manage if needed
+      allow delete: if isAdmin();
+    }
+
+    // PHASE 8D: STRUCTURED LEARNING
+
+    // LEARNING TOPICS
+    match /learningTopics/{topicId} {
+      // Students can read active topics, admins can read all
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'student' && resource.data.active == true);
+      // Admins can manage learning topics
+      allow write: if isAdmin();
+    }
+    
+    // PHASE 10: ROLE PATHS
+    match /roles/{roleId} {
+      // Students can read active roles, admins can read all
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'student' && resource.data.active == true);
+      // Admins can manage roles
+      allow write: if isAdmin();
+    }
+  }
+}
