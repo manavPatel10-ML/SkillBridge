@@ -2,9 +2,9 @@
 
 import { useEffect, useState, use } from "react";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, ArrowLeft, CheckCircle2, Circle, Clock, ArrowRight, Play, BookOpen, Lock, Briefcase, Award, Terminal } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Circle, Clock, ArrowRight, Play, BookOpen, Lock, Briefcase, Award, Terminal, Target } from "lucide-react";
 import Link from "next/link";
 import { RolePath, CompanyChallenge, StudentSkillScore } from "@/types";
 import { getSkillJourneyState, getSkillJourneyAction, SkillJourneyState } from "@/lib/mastery";
@@ -28,6 +28,8 @@ export default function RoleRoadmapPage({ params }: { params: Promise<{ id: stri
   const [relevantChallenges, setRelevantChallenges] = useState<MatchedChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isTargetRole, setIsTargetRole] = useState(false);
+  const [settingTarget, setSettingTarget] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -97,7 +99,16 @@ export default function RoleRoadmapPage({ params }: { params: Promise<{ id: stri
 
         setSkills(orderedSkills);
 
-        // 6. Fetch Relevant Opportunities
+        // 6. Check Student Profile for active target role
+        const profileDoc = await getDoc(doc(db, "studentProfiles", user.uid));
+        if (profileDoc.exists()) {
+          const pData = profileDoc.data();
+          if (pData?.targetRoleId === roleId) {
+            setIsTargetRole(true);
+          }
+        }
+
+        // 7. Fetch Relevant Opportunities
         const challengesSnap = await getDocs(query(collection(db, "companyChallenges"), where("status", "==", "published")));
         const now = new Date();
         const matchedActive: CompanyChallenge[] = [];
@@ -146,6 +157,27 @@ export default function RoleRoadmapPage({ params }: { params: Promise<{ id: stri
     fetchData();
   }, [user, roleId]);
 
+  const handleSetTargetRole = async () => {
+    if (!user || !role) return;
+    try {
+      setSettingTarget(true);
+      await setDoc(
+        doc(db, "studentProfiles", user.uid),
+        {
+          targetRoleId: role.id,
+          selectedSkills: role.requiredSkillIds || [],
+          updatedAt: new Date().toISOString()
+        },
+        { merge: true }
+      );
+      setIsTargetRole(true);
+    } catch (e) {
+      console.error("Failed to set target career path", e);
+    } finally {
+      setSettingTarget(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -185,7 +217,23 @@ export default function RoleRoadmapPage({ params }: { params: Promise<{ id: stri
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{role.title}</h1>
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="text-3xl font-bold text-gray-900">{role.title}</h1>
+                {isTargetRole ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Active Career Path
+                  </span>
+                ) : (
+                  <button 
+                    onClick={handleSetTargetRole}
+                    disabled={settingTarget}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-semibold rounded-lg transition-colors border border-blue-200 disabled:opacity-50"
+                  >
+                    {settingTarget ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Target className="w-3.5 h-3.5" />} 
+                    Set as My Career Path
+                  </button>
+                )}
+              </div>
               <p className="text-gray-600 text-lg max-w-2xl">{role.description}</p>
             </div>
             
