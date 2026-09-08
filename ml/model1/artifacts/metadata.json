@@ -1,0 +1,92 @@
+{
+  "status": "EXPERIMENTAL",
+  "modelVersion": "model1-gradient_boosting-v1",
+  "featureSchemaVersion": "features-v1",
+  "algorithm": "Gradient_Boosting",
+  "isSynthetic": true,
+  "environment": "development",
+  "datasetVersion": "synthetic-v1",
+  "randomSeed": 42,
+  "trainedAt": "2026-09-06T06:16:11.222635+00:00",
+  "observations": {
+    "total": 10000,
+    "train": 7000,
+    "validation": 1500,
+    "test": 1500,
+    "uniqueStudents": 200,
+    "featureCount": 24,
+    "missingValues": 0
+  },
+  "features": {
+    "numeric": [
+      "historicalTheoryAvg",
+      "historicalPracticalAvg",
+      "practiceCompletionRate",
+      "avgAttemptsPerPractice",
+      "totalEvaluatedActivities",
+      "recentTheoryAverage",
+      "recentPracticalAverage",
+      "topicMastery",
+      "topicAttempts",
+      "topicSuccessRate",
+      "topicConsistency",
+      "avgDifficultyAttempted",
+      "highestCompletedDifficulty",
+      "recentDifficulty",
+      "daysSinceLastActivity",
+      "daysSinceTopicActivity",
+      "recentActivityCount",
+      "targetDifficulty",
+      "prereqMastery",
+      "prereqCompletionCount"
+    ],
+    "categorical": [
+      "recentTheoryTrend",
+      "recentPracticalTrend",
+      "masterySource",
+      "targetTaskType"
+    ],
+    "target": "targetNextScore"
+  },
+  "validationMethodology": "Temporal Split (70% Train, 15% Validation, 15% Test)",
+  "validationMetrics": {
+    "Ridge_Regression": {
+      "MAE": 0.0924,
+      "RMSE": 0.1177,
+      "R2": 0.823
+    },
+    "Random_Forest": {
+      "MAE": 0.082,
+      "RMSE": 0.1078,
+      "R2": 0.8517
+    },
+    "Gradient_Boosting": {
+      "MAE": 0.0786,
+      "RMSE": 0.1041,
+      "R2": 0.8616
+    }
+  },
+  "testMetrics": {
+    "baseline": {
+      "MAE": 0.2717,
+      "RMSE": 0.3316,
+      "R2": -0.4087
+    },
+    "model": {
+      "MAE": 0.0849,
+      "RMSE": 0.1111,
+      "R2": 0.8418
+    },
+    "relativeRmseReductionPercent": 66.5
+  },
+  "distributions": {
+    "true_min": 0.05,
+    "true_max": 0.99,
+    "true_mean": 0.5629,
+    "true_std": 0.2795,
+    "pred_min": 0.0239,
+    "pred_max": 0.9983,
+    "pred_mean": 0.5563,
+    "pred_std": 0.2553
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "A_Model1_Prediction_Only": {
+    "Accuracy": 0.94,
+    "ROC_AUC": 0.9835,
+    "F1": 0.9162,
+    "Precision": 0.9498,
+    "Recall": 0.8849,
+    "LogLoss": 0.1509,
+    "BrierScore": 0.0432
+  },
+  "B_Mastery_Topic_State_Only": {
+    "Accuracy": 0.8627,
+    "ROC_AUC": 0.9471,
+    "F1": 0.8269,
+    "Precision": 0.776,
+    "Recall": 0.8849,
+    "LogLoss": 0.3061,
+    "BrierScore": 0.0967
+  },
+  "C_Previous_History_Only": {
+    "Accuracy": 0.648,
+    "ROC_AUC": 0.6824,
+    "F1": 0.5658,
+    "Precision": 0.5212,
+    "Recall": 0.6187,
+    "LogLoss": 0.6276,
+    "BrierScore": 0.2201
+  },
+  "D_Candidate_Metadata_Only": {
+    "Accuracy": 0.8787,
+    "ROC_AUC": 0.9375,
+    "F1": 0.8299,
+    "Precision": 0.8638,
+    "Recall": 0.7986,
+    "LogLoss": 0.3127,
+    "BrierScore": 0.095
+  },
+  "E_Full_Feature_Set": {
+    "Accuracy": 0.9427,
+    "ROC_AUC": 0.9829,
+    "F1": 0.9217,
+    "Precision": 0.9336,
+    "Recall": 0.9101,
+    "LogLoss": 0.1543,
+    "BrierScore": 0.0438
+  }
+}

@@ -76,7 +76,7 @@ export default function TheoryStagePage({ params }: { params: Promise<{ id: stri
         const cQ = query(collection(db, "companyChallenges"), where("__name__", "==", id));
         const cSnap = await getDocs(cQ);
         if (cSnap.empty) {
-          setError("Challenge not found.");
+          setError("Vacancy not found.");
           setLoading(false);
           return;
         }

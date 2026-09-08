@@ -46,9 +46,9 @@ export default function EditChallengePage() {
         if (docSnap.exists()) {
           const data = { id: docSnap.id, ...docSnap.data() } as CompanyChallenge;
           if (data.companyId !== user.uid) {
-            setError("You do not have permission to edit this challenge.");
+            setError("You do not have permission to edit this vacancy.");
           } else if (data.status === 'closed' || data.status === 'archived') {
-            setError("Closed or archived challenges cannot be edited.");
+            setError("Closed or archived vacancies cannot be edited.");
           } else {
             setChallenge(data);
             setTitle(data.title);
@@ -59,11 +59,11 @@ export default function EditChallengePage() {
             setMaxApplicants(data.maxApplicants.toString());
           }
         } else {
-          setError("Challenge not found.");
+          setError("Vacancy not found.");
         }
       } catch (err) {
-        console.error("Error fetching challenge:", err);
-        if (isMounted) setError("Failed to load challenge details.");
+        console.error("Error fetching vacancy:", err);
+        if (isMounted) setError("Failed to load vacancy details.");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -83,7 +83,7 @@ export default function EditChallengePage() {
     }
 
     if (challenge.status === 'published') {
-      if (!confirm("This challenge is currently published. Are you sure you want to save these changes? It may affect current applicants.")) {
+      if (!confirm("This vacancy is currently published. Are you sure you want to save these changes? It may affect current applicants.")) {
         return;
       }
     }
@@ -103,8 +103,8 @@ export default function EditChallengePage() {
       await updateDoc(doc(db, "companyChallenges", challenge.id!), updateData);
       router.push(`/dashboard/company/challenges/${challenge.id}`);
     } catch (err) {
-      console.error("Error updating challenge:", err);
-      setError("Failed to update challenge.");
+      console.error("Error updating vacancy:", err);
+      setError("Failed to update vacancy.");
       setSaving(false);
     }
   };
@@ -124,10 +124,10 @@ export default function EditChallengePage() {
       <ProtectedRoute allowedRoles={["company"]}>
         <div className="max-w-4xl mx-auto space-y-6">
           <Link href={`/dashboard/company/challenges/${params.id}`} className="inline-flex items-center text-blue-600 hover:underline">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenge
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancy
           </Link>
           <div className="bg-red-50 text-red-700 p-4 rounded-md text-sm border border-red-200">
-            {error || "Challenge not found."}
+            {error || "Vacancy not found."}
           </div>
         </div>
       </ProtectedRoute>
@@ -138,15 +138,15 @@ export default function EditChallengePage() {
     <ProtectedRoute allowedRoles={["company"]}>
       <div className="max-w-3xl mx-auto space-y-6 pb-12">
         <Link href={`/dashboard/company/challenges/${challenge.id}`} className="inline-flex items-center text-blue-600 hover:underline mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenge Details
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancy Details
         </Link>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
             <Edit2 className="w-6 h-6 text-gray-400" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Edit Challenge</h1>
-              <p className="text-sm text-gray-500">Update basic information for this challenge.</p>
+              <h1 className="text-xl font-bold text-gray-900">Edit Vacancy</h1>
+              <p className="text-sm text-gray-500">Update basic information for this vacancy.</p>
             </div>
           </div>
 
@@ -154,15 +154,15 @@ export default function EditChallengePage() {
             <div className="mb-6 bg-yellow-50 text-yellow-800 p-4 rounded-md text-sm border border-yellow-200 flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 shrink-0 text-yellow-600" />
               <div>
-                <p className="font-semibold">This challenge is currently published.</p>
-                <p className="mt-1">Making changes to a live challenge might confuse active applicants. Proceed with caution.</p>
+                <p className="font-semibold">This vacancy is currently published.</p>
+                <p className="mt-1">Making changes to a live vacancy might confuse active applicants. Proceed with caution.</p>
               </div>
             </div>
           )}
 
           <form onSubmit={handleSave} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Challenge Title</label>
+              <label className="block text-sm font-medium text-gray-700">Vacancy Title</label>
               <input
                 type="text"
                 value={title}

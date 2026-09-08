@@ -1,0 +1,97 @@
+{
+  "phase": 35,
+  "timestamp": "2026-09-06T06:55:18.172472",
+  "root_cause_of_repetition": {
+    "summary": "Model 2 was trained to predict pass probability P(pass). Purely ranking by P(pass) pathologically incentivizes selecting already-mastered, familiar tasks (where pass probability is 90-99%) while avoiding new, challenging, or weak-topic tasks (where initial pass probability is 40-60%). Additionally, previously completed tasks lacked eligibility filtering, and baseline repetition penalties were discarded during model sorting.",
+    "factors": [
+      "Objective misalignment: Pass maximization versus learning growth",
+      "Missing eligibility filter on already-mastered tasks",
+      "Absence of flow-channel penalty for overly trivial tasks",
+      "Repetition penalty omitted from model score sort order",
+      "Static evaluation artifact where familiar candidates had higher P(pass)"
+    ]
+  },
+  "repetition_comparison": {
+    "before_phase35_topk_static_repetition": 0.9,
+    "after_phase35_10_step_immediate_repetition": 0.0,
+    "after_phase35_10_step_repeated_within_3": 0.0,
+    "after_phase35_20_step_immediate_repetition": 0.0
+  },
+  "model2_classification": {
+    "ROC_AUC": 0.9731,
+    "Accuracy": 0.9107,
+    "F1": 0.8673,
+    "LogLoss": 0.2009,
+    "status": "EXPERIMENTAL"
+  },
+  "sequential_10_step": {
+    "model2": {
+      "unique_tasks": 10.0,
+      "immediate_repetition": 0.0,
+      "repeated_within_3": 0.0,
+      "repeated_within_5": 0.0,
+      "weak_topic_coverage": 2.0,
+      "difficulty_fit": 0.785,
+      "task_diversity": 1.0,
+      "pass_rate": 0.11
+    },
+    "baseline": {
+      "unique_tasks": 2.42,
+      "immediate_repetition": 0.0,
+      "repeated_within_3": 0.8289,
+      "repeated_within_5": 0.8422,
+      "weak_topic_coverage": 2.0,
+      "difficulty_fit": 0.742,
+      "task_diversity": 0.1197,
+      "pass_rate": 0.507
+    }
+  },
+  "sequential_20_step": {
+    "model2": {
+      "unique_tasks": 10.0,
+      "immediate_repetition": 0.0,
+      "repeated_within_3": 0.0,
+      "repeated_within_5": 0.0,
+      "weak_topic_coverage": 2.0,
+      "difficulty_fit": 0.812,
+      "task_diversity": 1.0,
+      "pass_rate": 0.0985
+    },
+    "baseline": {
+      "unique_tasks": 3.03,
+      "immediate_repetition": 0.0,
+      "repeated_within_3": 0.7342,
+      "repeated_within_5": 0.8858,
+      "weak_topic_coverage": 2.0,
+      "difficulty_fit": 0.765,
+      "task_diversity": 0.2527,
+      "pass_rate": 0.4865
+    }
+  },
+  "failure_recovery": {
+    "scenario_a_remediation": true,
+    "scenario_b_diversion": true,
+    "scenario_c_advancement": true,
+    "overall_status": "PASS"
+  },
+  "confidence_audit": {
+    "comparable_previously": false,
+    "root_cause": "Baseline confidence used unnormalized raw heuristic priorityScore [0, 100] instead of normalized scale [0, 1]",
+    "model_confidence_definition": "2 * |P(pass) - 0.5|, bounded in [0.0, 1.0]",
+    "baseline_confidence_definition": "2 * |clip(priorityScore / 100, 0, 1) - 0.5|, bounded in [0.0, 1.0]",
+    "model_confidence": 0.8741,
+    "normalized_baseline_confidence": 0.2928,
+    "comparable_now": true
+  },
+  "temporal_integrity": {
+    "temporal_leakage": "Passed",
+    "future_state_used": false
+  },
+  "production_boundaries": {
+    "model1_real_observations": 0,
+    "model1_status": "NOT_READY",
+    "model2_real_observations": 0,
+    "model2_status": "NOT_READY",
+    "deterministic_baselines_active": true
+  }
+}

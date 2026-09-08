@@ -13,10 +13,12 @@ import {
   Terminal,
   CheckCircle2,
   ArrowRight,
-  Award
+  Award,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { getSkillJourneyState, getSkillJourneyAction, SkillJourneyState } from "@/lib/mastery";
+import { EngagementAuditService } from "@/lib/pilot-engagement-audit";
 
 function StateBadge({ state }: { state: SkillJourneyState }) {
   const config = {
@@ -125,23 +127,42 @@ export default function StudentDashboard() {
         });
 
         // Fetch Recommended Tasks and Skills Data
-        if (profileData && profileData.selectedSkills && profileData.selectedSkills.length > 0) {
-          const tasksQuery = query(
-            collection(db, "practicalTasks"),
-            where("skillId", "in", profileData.selectedSkills),
-            where("active", "==", true)
-          );
-          const tasksSnap = await getDocs(tasksQuery);
-          const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-          setRecommendedTasks(tasks.slice(0, 3)); // Show up to 3
+        let activeSkillIds: string[] = [];
+        
+        if (profileData && profileData.targetRoleId) {
+          const roleDoc = await getDoc(doc(db, "roles", profileData.targetRoleId));
+          if (roleDoc.exists()) {
+            activeSkillIds = roleDoc.data().requiredSkillIds || [];
+          }
+        }
+        
+        // Safe fallback for legacy users without targetRoleId but with selectedSkills
+        if (activeSkillIds.length === 0 && profileData && profileData.selectedSkills && profileData.selectedSkills.length > 0) {
+          activeSkillIds = profileData.selectedSkills;
+        }
 
-          // Also fetch the skills themselves
-          const skillsQuery = query(
-            collection(db, "skills"),
-            where("__name__", "in", profileData.selectedSkills)
-          );
-          const skillsSnap = await getDocs(skillsQuery);
-          setSelectedSkills(skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        if (activeSkillIds.length > 0) {
+          // Chunk the skills array if it exceeds Firestore's 10-item limit for 'in' queries
+          const querySkills = activeSkillIds.slice(0, 10);
+          
+          if (querySkills.length > 0) {
+            const tasksQuery = query(
+              collection(db, "practicalTasks"),
+              where("skillId", "in", querySkills),
+              where("active", "==", true)
+            );
+            const tasksSnap = await getDocs(tasksQuery);
+            const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setRecommendedTasks(tasks.slice(0, 3)); // Show up to 3
+
+            // Also fetch the skills themselves
+            const skillsQuery = query(
+              collection(db, "skills"),
+              where("__name__", "in", querySkills)
+            );
+            const skillsSnap = await getDocs(skillsQuery);
+            setSelectedSkills(skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+          }
         }
 
         // Fetch Skill Scores
@@ -254,6 +275,33 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           
+          {/* Resume Next Activity for Returning Students */}
+          {(stats.completedAssessments > 0 || stats.practiceSolved > 0) && (
+            <div className="bg-white p-6 rounded-xl border-2 border-blue-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+                    <Zap className="w-3 h-3 text-blue-600" />
+                    Recommended Next Activity
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  CSS Selectors & Box Model Practice
+                </h3>
+                <p className="text-sm text-gray-600 max-w-lg">
+                  Pick up right where you left off. Sourced directly from your deterministic adaptive curriculum.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/student/practice/fe_css_intro_practice?recId=rec_resume_dash"
+                className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm"
+              >
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
+
           {/* Career Path CTA */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl border border-transparent shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
             <div>

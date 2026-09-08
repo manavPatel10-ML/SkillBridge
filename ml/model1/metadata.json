@@ -1,0 +1,6 @@
+{
+  "status": "NOT_READY",
+  "modelVersion": "none",
+  "reason": "Dataset is completely empty (0 rows). Zero real student activity.",
+  "timestamp": "2026-09-06T05:30:00.000Z"
+}

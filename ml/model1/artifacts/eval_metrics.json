@@ -1,0 +1,13 @@
+{
+  "baseline": {
+    "MAE": 0.2717,
+    "RMSE": 0.3316,
+    "R2": -0.4087
+  },
+  "model": {
+    "MAE": 0.0849,
+    "RMSE": 0.1111,
+    "R2": 0.8418
+  },
+  "relativeRmseReductionPercent": 66.5
+}

@@ -47,6 +47,7 @@ export default function TakeAssessmentPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const searchParams = useSearchParams();
   const attemptId = searchParams.get("attemptId");
+  const recId = searchParams.get("recId");
   
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -107,17 +108,34 @@ export default function TakeAssessmentPage({ params }: { params: Promise<{ id: s
           setIntegrityScore(attemptData.integrityScore ?? 100);
           setViolationCount(attemptData.violationCount ?? 0);
 
-          // Fetch only selected questions based on questionIds array
+          // Fetch sanitized questions via secure API (stripping correctAnswer)
           if (attemptData.questionIds && attemptData.questionIds.length > 0) {
-            const fetchedQuestions: Question[] = [];
-            // Fetch individually to guarantee we get exactly what we need, or use batched reads
-            for (const qId of attemptData.questionIds) {
-              const qSnap = await getDoc(doc(db, "assessmentQuestions", qId));
-              if (qSnap.exists()) {
-                fetchedQuestions.push({ id: qSnap.id, ...qSnap.data() } as Question);
+            try {
+              const token = await user.getIdToken();
+              const qRes = await fetch(`/api/assessments/${id}/questions?attemptId=${attemptId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if (qRes.ok) {
+                const qData = await qRes.json();
+                if (qData.questions && qData.questions.length > 0) {
+                  setQuestions(qData.questions);
+                } else {
+                  throw new Error("Empty questions returned from API");
+                }
+              } else {
+                throw new Error("API question fetch failed");
               }
+            } catch (qErr) {
+              // Fallback to direct read if offline
+              const fetchedQuestions: Question[] = [];
+              for (const qId of attemptData.questionIds) {
+                const qSnap = await getDoc(doc(db, "assessmentQuestions", qId));
+                if (qSnap.exists()) {
+                  fetchedQuestions.push({ id: qSnap.id, ...qSnap.data() } as Question);
+                }
+              }
+              setQuestions(fetchedQuestions);
             }
-            setQuestions(fetchedQuestions);
           }
         } else {
           router.replace(`/dashboard/student/assessments/${id}`);
@@ -339,39 +357,30 @@ export default function TakeAssessmentPage({ params }: { params: Promise<{ id: s
     setSubmitting(true);
     
     try {
-      // Calculate score locally (in Phase 3, this moves to server-side)
-      let score = 0;
-      let maxScore = 0;
-      let correctAnswers = 0;
-      
-      questions.forEach(q => {
-        maxScore += q.points || 10;
-        if (answersRef.current[q.id] === q.correctAnswer) {
-          score += q.points || 10;
-          correctAnswers++;
-        }
+      const token = await user?.getIdToken();
+      if (!token) throw new Error("Unauthorized session");
+
+      const submitRes = await fetch('/api/assessments/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          attemptId,
+          assessmentId: id,
+          answers: answersRef.current,
+          recId: recId || undefined
+        })
       });
-      
-      const percentage = Math.round((score / maxScore) * 100);
-      
-      await updateDoc(attemptRef.current, {
-        status: "completed",
-        score,
-        maxScore,
-        percentage,
-        correctAnswers,
-        totalQuestions: questions.length,
-        submittedAt: serverTimestamp()
-      });
+
+      if (!submitRes.ok) {
+        const errJson = await submitRes.json();
+        throw new Error(errJson.error || "Failed to evaluate assessment submission");
+      }
       
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(console.error);
-      }
-      
-      // Update aggregated skill score safely
-      if (assessment.skillId && user?.uid) {
-        // Fire and forget, UI shouldn't block on this aggregation.
-        updateSkillScore(user.uid, assessment.skillId).catch(console.error);
       }
       
       router.push(`/dashboard/student/assessments/${id}/result/${attemptId}`);

@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ChallengeApplication, CompanyChallenge } from "@/types";
+import { isCandidateStrongMatch } from "@/lib/candidate-matching";
 import Link from "next/link";
 import { 
   Users, 
@@ -69,7 +70,7 @@ export default function CompanyApplicationsPage() {
         // 3. Fetch Student Profiles to map names
         const studentIds = [...new Set(rawApps.map(a => a.studentId))];
         const studentMap: Record<string, {name: string, email: string}> = {};
-        const studentSkillScores: Record<string, Record<string, number>> = {};
+        const studentVerifiedSkills: Record<string, Set<string>> = {};
         
         for (let i = 0; i < studentIds.length; i += 10) {
           const chunk = studentIds.slice(i, i + 10);
@@ -88,22 +89,18 @@ export default function CompanyApplicationsPage() {
           const scoresSnap = await getDocs(scoresQ);
           scoresSnap.forEach(doc => {
             const data = doc.data();
-            if (!studentSkillScores[data.studentId]) studentSkillScores[data.studentId] = {};
-            studentSkillScores[data.studentId][data.skillId] = data.overallScore || 0;
+            if (!studentVerifiedSkills[data.studentId]) studentVerifiedSkills[data.studentId] = new Set<string>();
+            if (data.isVerified) {
+              studentVerifiedSkills[data.studentId].add(data.skillId);
+            }
           });
         }
 
         // 4. Combine data
         const enriched: EnrichedApplication[] = rawApps.map(app => {
           const requiredSkills = challengeReqSkillsMap[app.challengeId] || [];
-          const studentScores = studentSkillScores[app.studentId] || {};
-          let isStrongMatch = false;
-          
-          if (requiredSkills.length > 0) {
-             isStrongMatch = requiredSkills.every(reqSkillId => {
-               return (studentScores[reqSkillId] || 0) >= 70;
-             });
-          }
+          const verifiedSet = studentVerifiedSkills[app.studentId] || new Set<string>();
+          const isStrongMatch = isCandidateStrongMatch(requiredSkills, verifiedSet);
 
           return {
             ...app,

@@ -18,6 +18,9 @@ service cloud.firestore {
     function isCompany() {
       return isAuthenticated() && getRole() == 'company';
     }
+    function isPaidCompany() {
+      return isCompany() && get(/databases/$(database)/documents/companyProfiles/$(request.auth.uid)).data.subscriptionStatus == 'active';
+    }
     
     function getAssessmentPassingScore(assessmentId) {
       let data = get(/databases/$(database)/documents/assessments/$(assessmentId)).data;
@@ -33,21 +36,25 @@ service cloud.firestore {
     match /studentProfiles/{userId} {
       // Students can read/write their own profile
       allow write: if isOwner(userId) && getRole() == 'student';
-      // Companies can read all student profiles, students can read their own
-      allow read: if isAuthenticated() && (getRole() == 'company' || isOwner(userId));
+      // Paid companies can read all student profiles, students can read their own
+      allow read: if isAuthenticated() && (isPaidCompany() || isOwner(userId) || isAdmin());
     }
     
     // COMPANY PROFILES collection
     match /companyProfiles/{userId} {
-      // Companies can read/write their own profile
-      allow write: if isOwner(userId) && getRole() == 'company';
+      // Companies can read/write their own profile, but cannot manipulate subscriptionStatus
+      allow create: if isOwner(userId) && getRole() == 'company' && (!('subscriptionStatus' in request.resource.data) || request.resource.data.subscriptionStatus != 'active');
+      allow update: if isOwner(userId) && getRole() == 'company' && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscriptionStatus']));
+      // Admins can write anything
+      allow write: if isAdmin();
       // Anyone authenticated can read company profiles
       allow read: if isAuthenticated();
     }
     
     // VERIFIED SKILL SCORES collection
     match /skillScores/{docId} {
-      allow read: if isAuthenticated();
+      // Paid companies, admins, and the student themselves can read
+      allow read: if isAuthenticated() && (isPaidCompany() || isOwner(resource.data.studentId) || isAdmin());
       // Allow students to write their own skill scores, provided they point to a valid attempt
       // Also allow admins to write them directly when evaluating practical tasks
       allow write: if isAdmin() || (isOwner(request.resource.data.studentId) 
@@ -94,7 +101,7 @@ service cloud.firestore {
                        request.resource.data.highestTheoryAttemptId != null &&
                        get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.percentage >= getAssessmentPassingScore(get(/databases/$(database)/documents/assessmentAttempts/$(request.resource.data.highestTheoryAttemptId)).data.assessmentId)
                      )
-                   );
+                   ));
     }
     
     // ASSESSMENTS / TASKS collection
@@ -125,7 +132,7 @@ service cloud.firestore {
     }
 
     match /challengeInterviewQuestions/{questionId} {
-      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student');
+      allow read: if isAdmin() || (isAuthenticated() && getRole() == 'company') || (isAuthenticated() && getRole() == 'student' && exists(/databases/$(database)/documents/challengeApplications/$(request.auth.uid + "_" + resource.data.challengeId)));
       allow create, update, delete: if isAuthenticated() && getRole() == 'company';
     }
     
@@ -143,23 +150,61 @@ service cloud.firestore {
       allow update: if isAuthenticated() && getRole() == 'company' && resource.data.companyId == request.auth.uid;
     }
     
-    // CHALLENGE APPLICATIONS (Phase 5C)
+    // CHALLENGE APPLICATIONS (Phase 5C & 17B Remediation)
     match /challengeApplications/{appId} {
-      // Students can create applications for themselves
-      allow create: if isAuthenticated() && getRole() == 'student' && request.resource.data.studentId == request.auth.uid;
+      // Students can create applications for themselves with a deterministic ID
+      // SECURITY FIX: Must verify challenge exists, is published, and matches companyId.
+      // SECURITY FIX: Must prevent score and feedback forgery.
+      allow create: if isAuthenticated() 
+        && getRole() == 'student' 
+        && request.resource.data.studentId == request.auth.uid 
+        && appId == request.auth.uid + "_" + request.resource.data.challengeId
+        && exists(/databases/$(database)/documents/companyChallenges/$(request.resource.data.challengeId))
+        && get(/databases/$(database)/documents/companyChallenges/$(request.resource.data.challengeId)).data.status == 'published'
+        && request.resource.data.companyId == get(/databases/$(database)/documents/companyChallenges/$(request.resource.data.challengeId)).data.companyId
+        && (!('theoryScore' in request.resource.data) || request.resource.data.theoryScore == 0)
+        && (!('practicalScore' in request.resource.data) || request.resource.data.practicalScore == 0)
+        && (!('interviewScore' in request.resource.data) || request.resource.data.interviewScore == 0)
+        && (!('overallScore' in request.resource.data) || request.resource.data.overallScore == 0)
+        && (!('integrityScore' in request.resource.data) || request.resource.data.integrityScore == 100)
+        && (!('interviewFeedback' in request.resource.data) || request.resource.data.interviewFeedback == null || request.resource.data.interviewFeedback == '')
+        && (!('status' in request.resource.data) || request.resource.data.status in ['applied', 'in_progress']);
+
       // Students can read their own, companies can read applications for their challenges, admins can read all
       allow read: if isAdmin() || (isAuthenticated() && (
         (getRole() == 'student' && resource.data.studentId == request.auth.uid) ||
         (getRole() == 'company' && resource.data.companyId == request.auth.uid)
       ));
+      
       // Students can update their own progress. Companies can update status.
+      // SECURITY FIX: Added theoryScore, interviewFeedback, and integrityScore to the student blocklist.
       allow update: if isAuthenticated() && (
         (
           getRole() == 'student' && 
           resource.data.studentId == request.auth.uid && 
           request.resource.data.studentId == request.auth.uid && 
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['companyId', 'studentId', 'challengeId', 'practicalScore', 'interviewScore', 'overallScore']) &&
-          (!('status' in request.resource.data) || !(request.resource.data.status in ['shortlisted', 'rejected']))
+          
+          // 1. Immutable fields
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'companyId', 'studentId', 'challengeId', 
+            'theoryScore', 'practicalScore', 'interviewScore', 'overallScore', 'integrityScore', 
+            'interviewFeedback'
+          ]) &&
+          
+          // 2. Prevent transitioning INTO company-controlled states
+          (!('status' in request.resource.data) || !(request.resource.data.status in ['shortlisted', 'rejected', 'hired'])) &&
+          
+          // 3. Prevent transitioning OUT OF company-controlled states (including submitted)
+          (
+            !(resource.data.status in ['submitted', 'shortlisted', 'rejected', 'hired']) || 
+            (!('status' in request.resource.data) || request.resource.data.status == resource.data.status)
+          ) &&
+          
+          // 4. Evidence immutability post-submission
+          (
+            !(resource.data.status in ['submitted', 'shortlisted', 'rejected', 'hired']) || 
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['practicalAttempt', 'interviewAttempt', 'theoryAttempt'])
+          )
         ) ||
         (getRole() == 'company' && resource.data.companyId == request.auth.uid)
       );
@@ -189,15 +234,34 @@ service cloud.firestore {
     match /assessmentAttempts/{attemptId} {
       // Students can read their own, admins can read all (companies read aggregated via skillScores)
       allow read: if isAuthenticated() && (resource.data.studentId == request.auth.uid || isAdmin());
-      // Students can write their own attempts
-      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.studentId == request.auth.uid && request.resource.data.studentId == request.auth.uid;
+      // Students can create their own attempts with in_progress status and without fake scores
+      allow create: if isAuthenticated() 
+                    && request.resource.data.studentId == request.auth.uid
+                    && (!('score' in request.resource.data) || request.resource.data.score == null)
+                    && (!('percentage' in request.resource.data) || request.resource.data.percentage == null)
+                    && (!('status' in request.resource.data) || request.resource.data.status in ['started', 'in_progress']);
+      // Students can update answers and UI state, but CANNOT set score, percentage, or mark completed directly.
+      // Final grading is performed strictly server-side by /api/assessments/submit using Admin SDK.
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          resource.data.studentId == request.auth.uid && 
+          request.resource.data.studentId == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'score', 'percentage', 'maxScore', 'correctAnswers', 'status', 'assessmentId', 'studentId'
+          ])
+        )
+      );
     }
 
     // PRACTICAL TASK ATTEMPTS
     match /practicalTaskAttempts/{attemptId} {
-      // Students can read their own, admins can read all
-      allow read: if isAuthenticated() && (resource.data.studentId == request.auth.uid || isAdmin());
+      // Students can read their own, admins can read all, PAID companies can read evaluated attempts
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid || 
+        isAdmin() || 
+        (isPaidCompany() && 'evaluation' in resource.data && resource.data.evaluation.status == 'evaluated')
+      );
       // Students can create their own attempts (without an evaluation)
       allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid && !('evaluation' in request.resource.data);
       // Students can update their submission (but not the evaluation). Admins can update evaluations.
@@ -258,6 +322,26 @@ service cloud.firestore {
       allow read: if isAdmin() || (isAuthenticated() && getRole() == 'student' && resource.data.active == true);
       // Admins can manage roles
       allow write: if isAdmin();
+    }
+    
+    // PHASE 23C: ML TELEMETRY
+    match /mlTelemetry/{docId} {
+      // Explicitly deny all client access.
+      // All ML Telemetry is written securely via server-side Admin SDK in API routes.
+      allow read, write: if false;
+    }
+
+    // PHASE 28: BETA FEEDBACK
+    match /betaFeedback/{docId} {
+      // Direct client writes are blocked; all feedback is submitted via /api/beta/feedback
+      allow write: if false;
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // PHASE 29: BILLING WEBHOOK EVENTS (Idempotency)
+    match /webhookEvents/{docId} {
+      // Explicitly deny all client access. Server-side Admin SDK only.
+      allow read, write: if false;
     }
   }
 }

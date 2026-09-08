@@ -3,17 +3,21 @@
 import { useState, useEffect, use } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ArrowLeft, Play, CheckCircle2, XCircle, Code2, AlertCircle, Terminal, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { PracticeProblem, PracticeAttempt, LearningTopic } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import Editor from "@monaco-editor/react";
+import { PostCompletionNextAction } from "@/components/learning/PostCompletionNextAction";
+import { EngagementAuditService } from "@/lib/pilot-engagement-audit";
 
 export default function SolvePracticeProblemPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const problemId = resolvedParams.id;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const recId = searchParams.get('recId');
   const { user } = useAuth();
   
   const [problem, setProblem] = useState<PracticeProblem | null>(null);
@@ -99,7 +103,8 @@ export default function SolvePracticeProblemPage({ params }: { params: Promise<{
         body: JSON.stringify({
           problemId: problem.id,
           language,
-          sourceCode: code
+          sourceCode: code,
+          recId: recId || undefined
         })
       });
 
@@ -400,6 +405,28 @@ export default function SolvePracticeProblemPage({ params }: { params: Promise<{
           </div>
         </div>
       </div>
+
+      {result?.passed && problem && (
+        <div className="mt-8">
+          <PostCompletionNextAction
+            score={100}
+            maxScore={100}
+            passed={true}
+            taskTitle={problem.title}
+            nextAction={EngagementAuditService.generateNextAction(
+              user?.uid || "student",
+              problem.id || "practice_task",
+              problem.skillId || "fe_html",
+              1.0,
+              "frontend"
+            )}
+            onRetake={() => {
+              setResult(null);
+            }}
+            showReviewButton={false}
+          />
+        </div>
+      )}
     </div>
   );
 }

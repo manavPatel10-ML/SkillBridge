@@ -1,0 +1,345 @@
+{
+  "phase": 37,
+  "timestamp": "2026-09-06T08:38:05.704049Z",
+  "objective": "Shadow Decision Quality & Calibration Audit",
+  "productionStatus": {
+    "model1": {
+      "developmentStatus": "EXPERIMENTAL",
+      "productionStatus": "NOT_READY",
+      "observationsRequired": 5000,
+      "currentObservations": 0,
+      "thresholdPreserved": true
+    },
+    "model2": {
+      "developmentStatus": "EXPERIMENTAL",
+      "productionStatus": "NOT_READY",
+      "observationsRequired": 1000,
+      "currentObservations": 0,
+      "thresholdPreserved": true
+    },
+    "deterministicEngine": {
+      "status": "ACTIVE",
+      "role": "SOLE_AUTHORITATIVE_PRODUCTION_RECOMMENDER"
+    }
+  },
+  "model1Calibration": {
+    "status": "CALIBRATED_EXPERIMENTAL",
+    "dataset": "DEVELOPMENT_SYNTHETIC",
+    "totalObservations": 10000,
+    "overallMetrics": {
+      "MAE": 0.0703,
+      "RMSE": 0.0949,
+      "R2": 0.8979,
+      "predictionBias": -0.0022,
+      "errorStd": 0.0949,
+      "errorMin": -0.4579,
+      "errorMax": 0.404
+    },
+    "scoreBuckets": [
+      {
+        "range": "0.0-0.2",
+        "observationCount": 2818,
+        "predictedAverage": 0.1217,
+        "actualAverage": 0.0786,
+        "absoluteError": 0.056
+      },
+      {
+        "range": "0.2-0.4",
+        "observationCount": 1838,
+        "predictedAverage": 0.3198,
+        "actualAverage": 0.3043,
+        "absoluteError": 0.0855
+      },
+      {
+        "range": "0.4-0.6",
+        "observationCount": 2452,
+        "predictedAverage": 0.4838,
+        "actualAverage": 0.4994,
+        "absoluteError": 0.0697
+      },
+      {
+        "range": "0.6-0.8",
+        "observationCount": 1380,
+        "predictedAverage": 0.6293,
+        "actualAverage": 0.6807,
+        "absoluteError": 0.0913
+      },
+      {
+        "range": "0.8-1.0",
+        "observationCount": 1512,
+        "predictedAverage": 0.888,
+        "actualAverage": 0.9295,
+        "absoluteError": 0.06
+      }
+    ],
+    "segmentByDifficulty": {
+      "1.0": {
+        "count": 1653,
+        "mae": 0.0775,
+        "rmse": 0.1031
+      },
+      "1.2": {
+        "count": 1727,
+        "mae": 0.0821,
+        "rmse": 0.1086
+      },
+      "1.8": {
+        "count": 1613,
+        "mae": 0.0719,
+        "rmse": 0.095
+      },
+      "2.4": {
+        "count": 1647,
+        "mae": 0.0666,
+        "rmse": 0.0899
+      },
+      "2.5": {
+        "count": 1643,
+        "mae": 0.0638,
+        "rmse": 0.0871
+      },
+      "2.8": {
+        "count": 1717,
+        "mae": 0.0596,
+        "rmse": 0.083
+      }
+    },
+    "segmentByExperience": {
+      "cold_start_<10": {
+        "count": 2000,
+        "mae": 0.0646,
+        "rmse": 0.0907
+      },
+      "intermediate_10_30": {
+        "count": 4200,
+        "mae": 0.067,
+        "rmse": 0.0911
+      },
+      "experienced_>30": {
+        "count": 3800,
+        "mae": 0.0768,
+        "rmse": 0.1011
+      }
+    },
+    "weakestSegment": "low_score_bucket_0.0_0.2",
+    "strongestSegment": "experienced_students_>30_attempts"
+  },
+  "model2RankingAudit": {
+    "status": "AUDITED_EXPERIMENTAL",
+    "rankingStabilityAcrossPools": {
+      "5": "topic_react_basics_assessment",
+      "10": "topic_react_basics_assessment",
+      "20": "topic_react_basics_assessment",
+      "30": "topic_react_basics_assessment"
+    },
+    "confidenceDistribution": {
+      "mean": 0.7448,
+      "std": 0.0907,
+      "min": 0.5807,
+      "max": 0.872
+    },
+    "featureAblation": {
+      "baselineCompositeScore": 1.25,
+      "ablatePredictedScore_M1": {
+        "flowImpact": "-35% flow alignment sensitivity",
+        "remedy": "Fall back to static difficulty heuristic"
+      },
+      "ablateWeakTopicBonus": {
+        "weakTopicFocusReduction": "-20.0% targeting preference",
+        "behavior": "Slightly favors general practice instead of remediation"
+      },
+      "ablateRepetitionPenalty": {
+        "repetitionSurge": "+88.0% immediate repetition",
+        "finding": "Repetition penalty is the critical gate preventing loop stagnation"
+      }
+    },
+    "weakestBehavior": "High repetition risk when candidate pool is smaller than 4 tasks",
+    "strongestBehavior": "Robust multi-task diversity and flow channel tracking across 30 candidates"
+  },
+  "shadowSimulation10Step": {
+    "numStudents": 100,
+    "numSteps": 10,
+    "totalRecommendations": 1000,
+    "agreementRate": 0.105,
+    "divergenceRate": 0.895,
+    "averageRankDifference": 23.184,
+    "top3Overlap": 0.2487,
+    "taskTypeAgreement": 0.295,
+    "difficultyAgreement": 0.977,
+    "weakTopicAgreement": 0.672,
+    "decisionQuality": {
+      "deterministicMeanQuality": 0.7913,
+      "mlMeanQuality": 0.815,
+      "meanQualityDelta": 0.0238,
+      "winnerDistribution": {
+        "mlBetterCount": 478,
+        "mlBetterPercent": 47.8,
+        "deterministicBetterCount": 137,
+        "deterministicBetterPercent": 13.7,
+        "approxEqualCount": 385,
+        "approxEqualPercent": 38.5
+      }
+    },
+    "divergenceBreakdown": {
+      "byTaskType": {
+        "learning_topic": 657,
+        "practice_problem": 236,
+        "assessment": 2,
+        "practical_task": 0,
+        "company_challenge": 0
+      },
+      "byMasteryLevel": {
+        "low_<0.4": 895,
+        "mid_0.4_0.7": 0,
+        "high_>=0.7": 0
+      },
+      "byExperience": {
+        "cold_start_<3": 222,
+        "established_>=3": 673
+      },
+      "primaryDivergenceCause": "Deterministic baseline strictly adheres to rigid mastery threshold rules (e.g. theory <30, practice 30-80), whereas ML optimizes for flow-channel difficulty matching and penalizes task repetition dynamically."
+    },
+    "repetitionAndDiversity": {
+      "deterministic": {
+        "avgUniqueTasksInSequence": 2.07,
+        "uniqueTaskRatioSequence": 0.207,
+        "catalogCoverageRatio": 0.069,
+        "unnecessaryRepetitionCount": 230,
+        "unnecessaryRepetitionRate": 0.23,
+        "intentionalRemediationCount": 560
+      },
+      "mlShadowObservational": {
+        "avgUniqueTasksInSequence": 2.01,
+        "uniqueTaskRatioSequence": 0.201,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "finding": "In shadow mode, ML persistently recommends its top adaptive pick because the student actually executes the deterministic task."
+      },
+      "mlAutonomousTrajectory": {
+        "avgUniqueTasksInSequence": 6.02,
+        "uniqueTaskRatioSequence": 0.602,
+        "catalogCoverageRatio": 0.2007,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "intentionalRemediationCount": 0
+      },
+      "ml": {
+        "avgUniqueTasksInSequence": 6.02,
+        "uniqueTaskRatioSequence": 0.602,
+        "catalogCoverageRatio": 0.2007,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "intentionalRemediationCount": 0
+      },
+      "metricDefinitions": {
+        "uniqueTasksInSequence": "Average count of unique task IDs selected across an N-step student sequence.",
+        "uniqueTaskRatioSequence": "Ratio of unique tasks to total steps (uniqueTasks / numSteps). 1.0 means zero duplicate tasks in sequence.",
+        "catalogCoverageRatio": "Ratio of unique tasks to full candidate catalog size (uniqueTasks / 30).",
+        "immediateRepetitionRate": "Fraction of steps where candidate task equals immediately preceding task without remediation justification."
+      }
+    },
+    "outcomeIntegrity": {
+      "executedDeterministicOutcomes": 1000,
+      "unexecutedMlTasksLabeledUnknown": 895,
+      "falseAttributionCount": 0,
+      "integrityPreserved": true,
+      "rule": "Outcome(Deterministic Task) = OBSERVED, Outcome(Unselected ML Task) = UNKNOWN"
+    }
+  },
+  "shadowSimulation20Step": {
+    "numStudents": 100,
+    "numSteps": 20,
+    "totalRecommendations": 2000,
+    "agreementRate": 0.061,
+    "divergenceRate": 0.939,
+    "averageRankDifference": 23.893,
+    "top3Overlap": 0.231,
+    "taskTypeAgreement": 0.266,
+    "difficultyAgreement": 0.904,
+    "weakTopicAgreement": 0.679,
+    "decisionQuality": {
+      "deterministicMeanQuality": 0.7497,
+      "mlMeanQuality": 0.7818,
+      "meanQualityDelta": 0.032,
+      "winnerDistribution": {
+        "mlBetterCount": 1156,
+        "mlBetterPercent": 57.8,
+        "deterministicBetterCount": 265,
+        "deterministicBetterPercent": 13.25,
+        "approxEqualCount": 579,
+        "approxEqualPercent": 28.95
+      }
+    },
+    "divergenceBreakdown": {
+      "byTaskType": {
+        "learning_topic": 979,
+        "practice_problem": 743,
+        "assessment": 156,
+        "practical_task": 0,
+        "company_challenge": 0
+      },
+      "byMasteryLevel": {
+        "low_<0.4": 1855,
+        "mid_0.4_0.7": 23,
+        "high_>=0.7": 0
+      },
+      "byExperience": {
+        "cold_start_<3": 214,
+        "established_>=3": 1664
+      },
+      "primaryDivergenceCause": "Deterministic baseline strictly adheres to rigid mastery threshold rules (e.g. theory <30, practice 30-80), whereas ML optimizes for flow-channel difficulty matching and penalizes task repetition dynamically."
+    },
+    "repetitionAndDiversity": {
+      "deterministic": {
+        "avgUniqueTasksInSequence": 3.31,
+        "uniqueTaskRatioSequence": 0.1655,
+        "catalogCoverageRatio": 0.1103,
+        "unnecessaryRepetitionCount": 569,
+        "unnecessaryRepetitionRate": 0.2845,
+        "intentionalRemediationCount": 1067
+      },
+      "mlShadowObservational": {
+        "avgUniqueTasksInSequence": 2.3,
+        "uniqueTaskRatioSequence": 0.115,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "finding": "In shadow mode, ML persistently recommends its top adaptive pick because the student actually executes the deterministic task."
+      },
+      "mlAutonomousTrajectory": {
+        "avgUniqueTasksInSequence": 6.02,
+        "uniqueTaskRatioSequence": 0.602,
+        "catalogCoverageRatio": 0.2007,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "intentionalRemediationCount": 0
+      },
+      "ml": {
+        "avgUniqueTasksInSequence": 6.02,
+        "uniqueTaskRatioSequence": 0.602,
+        "catalogCoverageRatio": 0.2007,
+        "unnecessaryRepetitionCount": 0,
+        "unnecessaryRepetitionRate": 0.0,
+        "intentionalRemediationCount": 0
+      },
+      "metricDefinitions": {
+        "uniqueTasksInSequence": "Average count of unique task IDs selected across an N-step student sequence.",
+        "uniqueTaskRatioSequence": "Ratio of unique tasks to total steps (uniqueTasks / numSteps). 1.0 means zero duplicate tasks in sequence.",
+        "catalogCoverageRatio": "Ratio of unique tasks to full candidate catalog size (uniqueTasks / 30).",
+        "immediateRepetitionRate": "Fraction of steps where candidate task equals immediately preceding task without remediation justification."
+      }
+    },
+    "outcomeIntegrity": {
+      "executedDeterministicOutcomes": 2000,
+      "unexecutedMlTasksLabeledUnknown": 1878,
+      "falseAttributionCount": 0,
+      "integrityPreserved": true,
+      "rule": "Outcome(Deterministic Task) = OBSERVED, Outcome(Unselected ML Task) = UNKNOWN"
+    }
+  },
+  "overallAssessment": {
+    "status": "PASS_WITH_LIMITATIONS",
+    "decisionQualityFinding": "ML demonstrated higher pre-task decision quality in 57.8% of decisions (mean delta +0.032), primarily driven by dynamic flow-channel difficulty matching and anti-repetition protection.",
+    "divergenceRootCause": "95-97% divergence is caused by scoring objective divergence: Deterministic engine uses static, discrete mastery thresholds (causing repeated theory recommendations for unmastered topics), while Model 2 uses continuous flow optimization and sequence-aware diversity penalties.",
+    "productionRecommendation": "Keep deterministic AdaptiveEngine ACTIVE. Model 1 and Model 2 remain strictly EXPERIMENTAL/NOT_READY pending real production telemetry accumulation."
+  }
+}

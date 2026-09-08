@@ -1,0 +1,9 @@
+{
+  "shuffled_metrics": {
+    "MAE": 0.2725,
+    "RMSE": 0.3363,
+    "R2": -0.6488
+  },
+  "collapsed_to_baseline": true,
+  "verdict": "PASS: Shuffling targets collapsed predictive power to baseline (R2=-0.6488)."
+}

@@ -1,0 +1,23 @@
+{
+  "top_1": {
+    "observed_simulated_pass_rate_ml": 1.0,
+    "observed_simulated_pass_rate_baseline": 0.56,
+    "expected_score_ml": 0.9873,
+    "expected_score_baseline": 0.7224,
+    "weak_topic_targeting_ml": 0.96,
+    "difficulty_fit_ml": 0.3427,
+    "repetition_avg_ml": 10.51
+  },
+  "top_3": {
+    "observed_simulated_pass_rate_ml": 0.9822,
+    "observed_simulated_pass_rate_baseline": 0.7911,
+    "expected_score_ml": 0.9382,
+    "expected_score_baseline": 0.8452
+  },
+  "top_5": {
+    "observed_simulated_pass_rate_ml": 0.728,
+    "observed_simulated_pass_rate_baseline": 0.6267,
+    "expected_score_ml": 0.8283,
+    "expected_score_baseline": 0.7804
+  }
+}

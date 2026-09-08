@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useParams, useRouter } from "next/navigation";
-import { CompanyChallenge } from "@/types";
+import { CompanyChallenge, ChallengeApplication } from "@/types";
+import { isCandidateStrongMatch } from "@/lib/candidate-matching";
 import Link from "next/link";
 import { 
   ArrowLeft, 
@@ -65,7 +66,7 @@ export default function ChallengeDetailsPage() {
                   if (d.data().isVerified) verified.add(d.data().skillId);
                 });
                 
-                const isStrongMatch = data.requiredSkillIds.every(id => verified.has(id));
+                const isStrongMatch = isCandidateStrongMatch(data.requiredSkillIds, verified);
                 if (isStrongMatch) mCount++;
               }
             } else {
@@ -138,10 +139,10 @@ export default function ChallengeDetailsPage() {
       <ProtectedRoute allowedRoles={["company"]}>
         <div className="max-w-4xl mx-auto space-y-6">
           <Link href="/dashboard/company/challenges" className="inline-flex items-center text-blue-600 hover:underline">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenges
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancies
           </Link>
           <div className="bg-red-50 text-red-700 p-4 rounded-md text-sm border border-red-200">
-            {error || "Challenge not found."}
+            {error || "Vacancy not found."}
           </div>
         </div>
       </ProtectedRoute>
@@ -152,7 +153,7 @@ export default function ChallengeDetailsPage() {
     <ProtectedRoute allowedRoles={["company"]}>
       <div className="max-w-5xl mx-auto space-y-6 pb-12">
         <Link href="/dashboard/company/challenges" className="inline-flex items-center text-blue-600 hover:underline mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenges
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancies
         </Link>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -250,10 +251,10 @@ export default function ChallengeDetailsPage() {
                     <div className={`p-2 rounded-md ${challenge.practicalRequired ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-400'}`}>
                       <Code className="w-5 h-5" />
                     </div>
-                    <h4 className={`font-semibold ${challenge.practicalRequired ? 'text-purple-900' : 'text-gray-500'}`}>Practical</h4>
+                    <h4 className={`font-semibold ${challenge.practicalRequired ? 'text-purple-900' : 'text-gray-500'}`}>Hiring Task</h4>
                   </div>
                   <p className={`text-sm mt-2 ${challenge.practicalRequired ? 'text-purple-700' : 'text-gray-500'}`}>
-                    {challenge.practicalRequired ? 'Practical task and evaluation criteria configured.' : 'No practical task required.'}
+                    {challenge.practicalRequired ? 'Hiring task and evaluation criteria configured.' : 'No hiring task required.'}
                   </p>
                 </div>
 

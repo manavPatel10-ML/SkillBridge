@@ -45,7 +45,7 @@ export default function InterviewStagePage({ params }: { params: Promise<{ id: s
         const cQ = query(collection(db, "companyChallenges"), where("__name__", "==", id));
         const cSnap = await getDocs(cQ);
         if (cSnap.empty) {
-          setError("Challenge not found.");
+          setError("Vacancy not found.");
           setLoading(false);
           return;
         }
@@ -64,7 +64,7 @@ export default function InterviewStagePage({ params }: { params: Promise<{ id: s
         }
         const appData = { id: appSnap.docs[0].id, ...appSnap.docs[0].data() } as ChallengeApplication;
         
-        if (appData.interviewStatus === 'completed') {
+        if (appData.interviewStatus === 'completed' && !['submitted', 'shortlisted', 'rejected', 'hired'].includes(appData.status)) {
           router.push(`/dashboard/student/company-challenges/${id}/attempt`);
           return;
         }
@@ -188,6 +188,7 @@ export default function InterviewStagePage({ params }: { params: Promise<{ id: s
                 placeholder="Type your answer here..."
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm resize-y"
                 required
+                disabled={['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '')}
               />
               <div className="mt-2 text-right text-xs text-gray-400">
                 {(answers[q.id!] || "").length} characters
@@ -201,17 +202,19 @@ export default function InterviewStagePage({ params }: { params: Promise<{ id: s
             Cancel and Return
           </Link>
           
-          <button
-            type="submit"
-            disabled={submitting}
-            className="inline-flex justify-center items-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
-          >
-            {submitting ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
-            ) : (
-              <><CheckCircle2 className="w-5 h-5 mr-2" /> Submit Interview</>
-            )}
-          </button>
+          {!['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '') && (
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex justify-center items-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+            >
+              {submitting ? (
+                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
+              ) : (
+                <><CheckCircle2 className="w-5 h-5 mr-2" /> Submit Interview</>
+              )}
+            </button>
+          )}
         </div>
       </form>
     </div>

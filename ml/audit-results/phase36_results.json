@@ -1,0 +1,87 @@
+{
+  "phase": 36,
+  "timestamp": "2026-09-06T08:19:48.931691Z",
+  "modelStatus": {
+    "model1": {
+      "developmentStatus": "EXPERIMENTAL",
+      "productionStatus": "NOT_READY",
+      "observationsRequired": 5000,
+      "currentObservations": 0,
+      "version": "model1-gradient_boosting-v1"
+    },
+    "model2": {
+      "developmentStatus": "EXPERIMENTAL",
+      "productionStatus": "NOT_READY",
+      "observationsRequired": 1000,
+      "currentObservations": 0,
+      "version": "model2-gradient_boosting-v1"
+    },
+    "deterministicEngine": {
+      "status": "ACTIVE",
+      "role": "SOLE_AUTHORITATIVE_PRODUCTION_RECOMMENDER"
+    }
+  },
+  "shadowEvaluation10Step": {
+    "numStudents": 100,
+    "numSteps": 10,
+    "totalRecommendations": 1000,
+    "agreementRate": 0.026,
+    "divergenceRate": 0.974,
+    "top3Overlap": 0.075,
+    "averageRankDifference": 6.649,
+    "taskTypeAgreement": 0.097,
+    "difficultyAgreement": 1.0,
+    "weakTopicAgreement": 0.569,
+    "repetition": {
+      "unnecessaryRepetitionRate": 0.0,
+      "intentionalRemediationCount": 0,
+      "uniqueTasksRatio": 0.286,
+      "taskTypeDiversityRatio": 0.318
+    },
+    "outcomeIntegrity": {
+      "executedDeterministicOutcomes": 1000,
+      "unexecutedMlTasksLabeledUnknown": 974,
+      "integrityPreserved": true,
+      "rule": "Outcome(Deterministic Task) = observed, Outcome(Unselected ML Task) = UNKNOWN"
+    }
+  },
+  "shadowEvaluation20Step": {
+    "numStudents": 100,
+    "numSteps": 20,
+    "totalRecommendations": 2000,
+    "agreementRate": 0.047,
+    "divergenceRate": 0.953,
+    "top3Overlap": 0.0523,
+    "averageRankDifference": 6.5705,
+    "taskTypeAgreement": 0.1245,
+    "difficultyAgreement": 0.991,
+    "weakTopicAgreement": 0.582,
+    "repetition": {
+      "unnecessaryRepetitionRate": 0.0,
+      "intentionalRemediationCount": 0,
+      "uniqueTasksRatio": 0.2175,
+      "taskTypeDiversityRatio": 0.474
+    },
+    "outcomeIntegrity": {
+      "executedDeterministicOutcomes": 2000,
+      "unexecutedMlTasksLabeledUnknown": 1906,
+      "integrityPreserved": true,
+      "rule": "Outcome(Deterministic Task) = observed, Outcome(Unselected ML Task) = UNKNOWN"
+    }
+  },
+  "causalityProtection": {
+    "causalClaimsAllowed": false,
+    "standardPhrasing": [
+      "ML recommendation differed from deterministic recommendation.",
+      "Observed outcome of the actually assigned task."
+    ]
+  },
+  "safetyGuarantees": {
+    "readOnlyShadow": true,
+    "skillScoresMutated": false,
+    "progressionMutated": false,
+    "verificationMutated": false,
+    "talentAccessMutated": false,
+    "shadowCountsTowardProductionTraining": false
+  }
+}

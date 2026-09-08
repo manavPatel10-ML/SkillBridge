@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ChallengeApplication, CompanyChallenge, ChallengeApplicationStatus } from "@/types";
+import { isCandidateStrongMatch } from "@/lib/candidate-matching";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -39,6 +40,7 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
   // Form states for grading
   const [practicalScore, setPracticalScore] = useState<number>(0);
   const [interviewScore, setInterviewScore] = useState<number>(0);
+  const [interviewFeedback, setInterviewFeedback] = useState<string>('');
   const [overallStatus, setOverallStatus] = useState<ChallengeApplicationStatus>('applied');
 
   const [isStrongMatch, setIsStrongMatch] = useState<boolean>(false);
@@ -68,6 +70,7 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
         setApplication(appData);
         setPracticalScore(appData.practicalScore || 0);
         setInterviewScore(appData.interviewScore || 0);
+        setInterviewFeedback(appData.interviewFeedback || '');
         setOverallStatus(appData.status);
 
         // Fetch challenge
@@ -91,15 +94,15 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
           const scoresQ = query(collection(db, "skillScores"), where("studentId", "==", appData.studentId));
           const scoresSnap = await getDocs(scoresQ);
           
-          const studentScores: Record<string, number> = {};
+          const verifiedSet = new Set<string>();
           scoresSnap.forEach(d => {
             const data = d.data();
-            studentScores[data.skillId] = data.overallScore || 0;
+            if (data.isVerified) {
+              verifiedSet.add(data.skillId);
+            }
           });
           
-          const isMatch = challengeData.requiredSkillIds.every(reqSkillId => {
-            return (studentScores[reqSkillId] || 0) >= 70;
-          });
+          const isMatch = isCandidateStrongMatch(challengeData.requiredSkillIds, verifiedSet);
           
           setIsStrongMatch(isMatch);
         }
@@ -193,13 +196,15 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
       
       await updateDoc(appRef, {
         interviewScore: interviewScore,
+        interviewFeedback: interviewFeedback,
         interviewStatus: 'completed',
         overallScore: newOverall
       });
       
       setApplication({
         ...application, 
-        interviewScore: interviewScore, 
+        interviewScore: interviewScore,
+        interviewFeedback: interviewFeedback,
         interviewStatus: 'completed', 
         overallScore: newOverall
       });
@@ -292,6 +297,7 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
                   <option value="submitted">Submitted</option>
                   <option value="shortlisted">Shortlisted</option>
                   <option value="rejected">Rejected</option>
+                  <option value="hired">Hired</option>
                 </select>
               </div>
             </div>
@@ -304,7 +310,7 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
               <div className="mt-2 text-xs text-gray-500">Status: {application.theoryStatus}</div>
             </div>
             <div className="p-6 text-center">
-              <span className="block text-sm font-medium text-gray-500 mb-1">Practical Score</span>
+              <span className="block text-sm font-medium text-gray-500 mb-1">Hiring Task Score</span>
               <span className="text-3xl font-bold text-gray-900">{application.practicalScore || 0}%</span>
               <div className="mt-2 text-xs text-gray-500">Status: {application.practicalStatus}</div>
             </div>
@@ -335,11 +341,11 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* Practical Task Review */}
+        {/* Hiring Task Review */}
         {challenge.practicalRequired && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <Code className="w-5 h-5 mr-2 text-blue-500" /> Practical Task Submission
+              <Code className="w-5 h-5 mr-2 text-blue-500" /> Hiring Task Submission
             </h2>
             
             {application.practicalStatus !== 'not_started' ? (
@@ -387,12 +393,12 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
                     disabled={updating}
                     className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
                   >
-                    Save Practical Score
+                    Save Hiring Task Score
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 italic text-sm">The student has not started the practical task yet.</p>
+              <p className="text-gray-500 italic text-sm">The student has not started the hiring task yet.</p>
             )}
           </div>
         )}
@@ -419,26 +425,39 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
                   <p className="text-gray-500 italic text-sm">No answers submitted.</p>
                 )}
 
-                <div className="pt-4 border-t border-gray-200 flex items-end gap-4">
+                <div className="pt-4 border-t border-gray-200 space-y-4">
                   <div>
-                    <label htmlFor="interview-score" className="block text-sm font-medium text-gray-700 mb-1">Grade (0-100)</label>
-                    <input 
-                      id="interview-score"
-                      type="number" 
-                      min="0" 
-                      max="100" 
-                      value={interviewScore}
-                      onChange={(e) => setInterviewScore(Number(e.target.value))}
-                      className="block w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    <label htmlFor="interview-feedback" className="block text-sm font-medium text-gray-700 mb-1">Interview Feedback (Visible to student if shortlisted/rejected)</label>
+                    <textarea
+                      id="interview-feedback"
+                      rows={4}
+                      value={interviewFeedback}
+                      onChange={(e) => setInterviewFeedback(e.target.value)}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border"
+                      placeholder="Provide qualitative feedback on the student's technical interview performance..."
                     />
                   </div>
-                  <button
-                    onClick={handleGradeInterview}
-                    disabled={updating}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
-                  >
-                    Save Interview Score
-                  </button>
+                  <div className="flex items-end gap-4">
+                    <div>
+                      <label htmlFor="interview-score" className="block text-sm font-medium text-gray-700 mb-1">Grade (0-100)</label>
+                      <input 
+                        id="interview-score"
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        value={interviewScore}
+                        onChange={(e) => setInterviewScore(Number(e.target.value))}
+                        className="block w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3 border"
+                      />
+                    </div>
+                    <button
+                      onClick={handleGradeInterview}
+                      disabled={updating}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+                    >
+                      Save Evaluation
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

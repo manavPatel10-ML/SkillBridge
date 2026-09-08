@@ -54,7 +54,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
         const docSnap = await getDoc(docRef);
         
         if (!docSnap.exists() || docSnap.data().status !== "published") {
-          setError("Challenge not found or not available.");
+          setError("Vacancy not found or not available.");
           setLoading(false);
           return;
         }
@@ -100,7 +100,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
 
       } catch (err) {
         console.error("Error fetching challenge:", err);
-        setError("Failed to load challenge details.");
+        setError("Failed to load vacancy details.");
       } finally {
         setLoading(false);
       }
@@ -121,12 +121,12 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
 
       await runTransaction(db, async (transaction) => {
         const cDoc = await transaction.get(challengeRef);
-        if (!cDoc.exists()) throw "Challenge does not exist!";
+        if (!cDoc.exists()) throw "Vacancy does not exist!";
         
         const cData = cDoc.data() as CompanyChallenge;
         
         if (cData.applicantCount >= cData.maxApplicants) {
-          throw "Challenge has reached maximum applicants.";
+          throw "Vacancy has reached maximum applicants.";
         }
 
         // Check again for existing application just in case
@@ -137,7 +137,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
         );
         const appSnap = await getDocs(appQ); // Note: getDocs isn't strictly inside the transaction lock for creation, but good enough for client side protection.
         if (!appSnap.empty) {
-          throw "You have already applied for this challenge.";
+          throw "You have already applied for this vacancy.";
         }
 
         const newApp: Omit<ChallengeApplication, "id"> = {
@@ -156,7 +156,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
           integrityScore: 100,
         };
 
-        const appRef = doc(collection(db, "challengeApplications"));
+        const appRef = doc(db, "challengeApplications", `${user.uid}_${id}`);
         newAppId = appRef.id;
         
         transaction.set(appRef, newApp);
@@ -186,11 +186,11 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
       <ProtectedRoute allowedRoles={["student"]}>
         <div className="max-w-4xl mx-auto space-y-6">
           <Link href="/dashboard/student/company-challenges" className="inline-flex items-center text-blue-600 hover:underline">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenges
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancies
           </Link>
           <div className="bg-red-50 text-red-700 p-4 rounded-md text-sm border border-red-200 flex items-center">
              <AlertCircle className="w-5 h-5 mr-2" />
-            {error || "Challenge not found."}
+            {error || "Vacancy not found."}
           </div>
         </div>
       </ProtectedRoute>
@@ -204,7 +204,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
     <ProtectedRoute allowedRoles={["student"]}>
       <div className="max-w-4xl mx-auto space-y-6 pb-12">
         <Link href="/dashboard/student/company-challenges" className="inline-flex items-center text-blue-600 hover:underline mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenges
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancies
         </Link>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -235,11 +235,11 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
                     href={`/dashboard/student/company-challenges/${id}/attempt`}
                     className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                   >
-                    Go to Challenge Dashboard
+                    Go to Vacancy Dashboard
                   </Link>
                 ) : isFull ? (
                   <button disabled className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gray-400 cursor-not-allowed">
-                    Challenge Full
+                    Vacancy Full
                   </button>
                 ) : deadlinePassed ? (
                   <button disabled className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gray-400 cursor-not-allowed">
@@ -262,12 +262,12 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
             </div>
 
             <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">About this Challenge</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">About this Vacancy</h3>
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{challenge.description}</p>
             </div>
 
             <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Challenge Stages</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Vacancy Stages</h3>
               
               <div className="space-y-4">
                 {challenge.theoryRequired && (
@@ -291,7 +291,7 @@ export default function StudentChallengeDetailsPage({ params }: { params: Promis
                       <Code className="w-6 h-6 text-purple-700" />
                     </div>
                     <div>
-                      <h4 className="text-base font-semibold text-purple-900">Practical Task</h4>
+                      <h4 className="text-base font-semibold text-purple-900">Hiring Task</h4>
                       <p className="text-sm text-purple-700 mt-1">
                         {practicalTask ? (
                           <>

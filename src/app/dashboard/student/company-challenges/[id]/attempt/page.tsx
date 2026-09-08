@@ -45,7 +45,7 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
         const cQ = query(collection(db, "companyChallenges"), where("__name__", "==", id));
         const cSnap = await getDocs(cQ);
         if (cSnap.empty) {
-          setError("Challenge not found.");
+          setError("Vacancy not found.");
           setLoading(false);
           return;
         }
@@ -154,7 +154,7 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
       <ProtectedRoute allowedRoles={["student"]}>
         <div className="max-w-4xl mx-auto space-y-6">
           <Link href="/dashboard/student/company-challenges" className="inline-flex items-center text-blue-600 hover:underline">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenges
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancies
           </Link>
           <div className="bg-red-50 text-red-700 p-4 rounded-md text-sm border border-red-200">
             {error || "An error occurred."}
@@ -194,7 +194,7 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
             </div>
             <div>
               <h3 className="font-bold text-gray-700">{title}</h3>
-              <p className="text-sm text-gray-500">Not required for this challenge</p>
+              <p className="text-sm text-gray-500">Not required for this vacancy</p>
             </div>
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
     <ProtectedRoute allowedRoles={["student"]}>
       <div className="max-w-4xl mx-auto space-y-6 pb-12">
         <Link href={`/dashboard/student/company-challenges/${id}`} className="inline-flex items-center text-blue-600 hover:underline mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Challenge Details
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Vacancy Details
         </Link>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -308,7 +308,7 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
               )}
 
               {renderStageCard(
-                "2. Practical Challenge", 
+                "2. Hiring Task", 
                 <Code className="w-6 h-6" />, 
                 challenge.practicalRequired, 
                 application.practicalStatus, 
@@ -339,6 +339,13 @@ export default function ChallengeExecutionDashboard({ params }: { params: Promis
                   <div className="mt-4 pt-4 border-t border-blue-200">
                     <span className="text-sm text-blue-600">Overall Score: </span>
                     <span className="font-bold text-blue-800">{application.overallScore}%</span>
+                  </div>
+                )}
+                
+                {(application.status === 'shortlisted' || application.status === 'rejected') && application.interviewFeedback && (
+                  <div className="mt-6 p-4 bg-white rounded border border-blue-200 text-left shadow-sm">
+                    <h4 className="text-sm font-bold text-gray-900 mb-2">Company Interview Feedback</h4>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.interviewFeedback}</p>
                   </div>
                 )}
               </div>

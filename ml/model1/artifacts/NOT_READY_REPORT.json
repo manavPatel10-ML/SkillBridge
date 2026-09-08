@@ -1,0 +1,16 @@
+{
+  "status": "NOT_READY",
+  "timestamp": "2026-09-04T11:11:10.270014",
+  "reason": "Dataset is completely empty (0 rows).",
+  "dataset_stats": {
+    "total_rows": 0,
+    "unique_students": 0,
+    "unique_topics": 0
+  },
+  "required": {
+    "min_total_observations": 5000,
+    "min_unique_students": 100,
+    "min_unique_topics": 5
+  },
+  "action": "Complete the training infrastructure, run the app, and gather more real student telemetry."
+}

@@ -3,6 +3,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { executeCode } from '@/lib/piston';
 import { PracticeProblem, TestCase, PracticeAttempt } from '@/types';
+import { TelemetryService } from '@/lib/ml-telemetry';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse Request
     const body = await req.json();
-    const { problemId, language, sourceCode } = body;
+    const { problemId, language, sourceCode, recId } = body;
 
     if (!problemId || !language || typeof sourceCode !== 'string') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -136,6 +137,23 @@ export async function POST(req: NextRequest) {
     };
 
     const docRef = await adminDb.collection('practiceAttempts').add(attemptData);
+
+    // ML Telemetry Outcome Capture (Phase 23C)
+    if (recId) {
+      const totalTests = attemptData.totalTests || 0;
+      const passedTests = attemptData.passedTests || 0;
+      const score = totalTests > 0 
+        ? (passedTests / totalTests) * 100 
+        : (attemptData.passed ? 100 : 0);
+      
+      await TelemetryService.recordOutcome(
+        recId,
+        score,
+        attemptData.passed,
+        1, // We could look up attempt counts here if needed
+        attemptData.passed ? 'completed' : 'failed'
+      );
+    }
 
     // 7. Return sanitized response
     return NextResponse.json({

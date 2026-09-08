@@ -1,0 +1,99 @@
+{
+  "status": "EXPERIMENTAL",
+  "modelVersion": "model2-gradient_boosting-v1",
+  "featureSchemaVersion": "features-v2",
+  "algorithm": "Gradient_Boosting",
+  "isSynthetic": true,
+  "environment": "development",
+  "datasetVersion": "synthetic-v1",
+  "randomSeed": 42,
+  "trainedAt": "2026-09-06T06:39:57.101693+00:00",
+  "observations": {
+    "total": 5000,
+    "train": 3500,
+    "validation": 750,
+    "test": 750,
+    "uniqueStudents": 98,
+    "featureCount": 15
+  },
+  "features": {
+    "numeric": [
+      "predictedNextScore",
+      "currentMastery",
+      "weakestTopicMastery",
+      "prereqSatisfied",
+      "syllabusDepth",
+      "previousTasksCount",
+      "previousSuccessRate",
+      "daysSinceLastActivity",
+      "candidateDifficulty",
+      "difficultyFit",
+      "repetitionCount",
+      "priorityScore"
+    ],
+    "categorical": [
+      "candidateTaskType",
+      "topicId",
+      "skillId"
+    ],
+    "target": "actualOutcomePassed"
+  },
+  "validationMethodology": "Temporal Split (70% Train, 15% Validation, 15% Test)",
+  "validationMetrics": {
+    "Logistic_Regression": {
+      "Accuracy": 0.9293,
+      "ROC_AUC": 0.9755,
+      "F1": 0.8672,
+      "Precision": 0.8398,
+      "Recall": 0.8964,
+      "LogLoss": 0.1736
+    },
+    "Random_Forest": {
+      "Accuracy": 0.936,
+      "ROC_AUC": 0.9753,
+      "F1": 0.875,
+      "Precision": 0.8796,
+      "Recall": 0.8705,
+      "LogLoss": 0.2427
+    },
+    "Gradient_Boosting": {
+      "Accuracy": 0.9293,
+      "ROC_AUC": 0.9758,
+      "F1": 0.8665,
+      "Precision": 0.8431,
+      "Recall": 0.8912,
+      "LogLoss": 0.1668
+    }
+  },
+  "testMetrics": {
+    "baseline": {
+      "Accuracy": 0.7027,
+      "ROC_AUC": 0.8601,
+      "F1": 0.3422,
+      "Precision": 0.6304,
+      "Recall": 0.2348,
+      "LogLoss": 0.513
+    },
+    "model": {
+      "Accuracy": 0.9107,
+      "ROC_AUC": 0.9731,
+      "F1": 0.8673,
+      "Precision": 0.8488,
+      "Recall": 0.8866,
+      "LogLoss": 0.2009
+    },
+    "aucImprovement": 0.113
+  },
+  "selectionComparison": {
+    "baselinePassRate": 0.66,
+    "mlPassRate": 0.9933,
+    "baselineCompletionRate": 1.0,
+    "mlCompletionRate": 1.0,
+    "baselineAvgDifficultyFit": 0.7332,
+    "mlAvgDifficultyFit": 0.4948,
+    "baselineRepetitionAvg": 6.61,
+    "mlRepetitionAvg": 8.19,
+    "baselineWeakTopicTargetingRate": 1.0,
+    "mlWeakTopicTargetingRate": 1.0
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "model1_distribution": {
+    "score_mean": 0.4597,
+    "score_std": 0.2999,
+    "score_min": 0.05,
+    "score_max": 0.99,
+    "mastery_mean": 0.1723,
+    "difficulty_dist": {
+      "1.8": 1687,
+      "2.8": 1677,
+      "1.0": 1671,
+      "2.5": 1669,
+      "2.4": 1662,
+      "1.2": 1634
+    },
+    "task_type_dist": {
+      "practice_problem": 3020,
+      "learning_topic": 2955,
+      "assessment": 2023,
+      "practical_task": 1218,
+      "company_challenge": 784
+    }
+  },
+  "model2_distribution": {
+    "pass_rate": 0.2304,
+    "completion_rate": 0.9914,
+    "abandonment_rate": 0.0086,
+    "task_type_dist": {
+      "practice_problem": 1529,
+      "learning_topic": 1450,
+      "assessment": 1013,
+      "practical_task": 611,
+      "company_challenge": 397
+    }
+  },
+  "observations": [
+    "Overall synthetic pass rate is 23.0% across all tasks.",
+    "Abandonment occurred on 0.9% of tasks when extreme difficulty mismatch occurred.",
+    "Task types are balanced across all 5 candidate categories (learning_topic ~30%, practice_problem ~30%, assessment ~20%, practical_task ~12%, company_challenge ~8%).",
+    "Score distribution has mean 0.4597 and std 0.2999, reflecting reasonable student diversity."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "A_Historical_Only": {
+    "MAE": 0.1987,
+    "RMSE": 0.2313,
+    "R2": 0.2199
+  },
+  "B_Practice_Behavior_Only": {
+    "MAE": 0.2048,
+    "RMSE": 0.244,
+    "R2": 0.1318
+  },
+  "C_Mastery_Topic_Only": {
+    "MAE": 0.093,
+    "RMSE": 0.1234,
+    "R2": 0.7781
+  },
+  "D_Activity_Recent_Trends_Only": {
+    "MAE": 0.0955,
+    "RMSE": 0.1277,
+    "R2": 0.7623
+  },
+  "E_Full_Feature_Set": {
+    "MAE": 0.0759,
+    "RMSE": 0.1019,
+    "R2": 0.8488
+  }
+}

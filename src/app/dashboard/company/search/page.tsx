@@ -3,9 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { Loader2, Search, GraduationCap, Filter, Award, Code, CheckCircle, ChevronRight, AlertCircle } from "lucide-react";
+import { Loader2, Search, GraduationCap, Filter, Award, Code, CheckCircle, ChevronRight, AlertCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
 
 type StudentData = {
   id: string;
@@ -26,8 +28,11 @@ type Skill = {
 };
 
 export default function TalentDiscoveryPage() {
+  const { user } = useAuth();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriptionChecked, setSubscriptionChecked] = useState(false);
   
   // Raw Fetched Data
   const [rawProfiles, setRawProfiles] = useState<Record<string, any>>({});
@@ -41,25 +46,35 @@ export default function TalentDiscoveryPage() {
   const [minPracticalScore, setMinPracticalScore] = useState(0);
   const [requireVerified, setRequireVerified] = useState(false);
 
-  // 1. Fetch Skills (Once on mount)
+  // 1. Fetch Subscription Status & Skills
   useEffect(() => {
-    const fetchSkills = async () => {
+    const fetchInitData = async () => {
+      if (!user) return;
       try {
+        const companyDoc = await getDoc(doc(db, "companyProfiles", user.uid));
+        if (companyDoc.exists() && companyDoc.data().subscriptionStatus === 'active') {
+          setIsSubscribed(true);
+        }
+        setSubscriptionChecked(true);
+
         const skillsSnap = await getDocs(collection(db, "skills"));
         const skillsArray: Skill[] = [];
-        skillsSnap.forEach(doc => {
-          skillsArray.push({ id: doc.id, name: doc.data().name });
+        skillsSnap.forEach(d => {
+          skillsArray.push({ id: d.id, name: d.data().name });
         });
         setSkills(skillsArray.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (err) {
-        console.error("Error fetching skills:", err);
+        console.error("Error fetching init data:", err);
+        setSubscriptionChecked(true);
       }
     };
-    fetchSkills();
-  }, []);
+    fetchInitData();
+  }, [user]);
 
   // 2. Fetch SkillScores and Profiles based on selectedSkill
   useEffect(() => {
+    if (!subscriptionChecked || !isSubscribed) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -109,7 +124,7 @@ export default function TalentDiscoveryPage() {
     };
 
     fetchData();
-  }, [selectedSkill]); // Refetch from Firestore ONLY when skill changes
+  }, [selectedSkill, subscriptionChecked, isSubscribed]); // Refetch from Firestore ONLY when skill changes
 
   // 3. Client-side filtering and aggregation
   const filteredStudents = useMemo(() => {
@@ -199,6 +214,53 @@ export default function TalentDiscoveryPage() {
   const getSkillName = (id: string) => {
     return skills.find(s => s.id === id)?.name || id;
   };
+
+  if (!subscriptionChecked) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!isSubscribed) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 mt-12">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden text-center p-12 border border-gray-200">
+          <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6">
+            <Lock className="h-10 w-10 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+            Verified Talent Access
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Subscribe to access SkillBridge's verified student talent pool. 
+            Discover top performers, review their practical work, and hire with confidence.
+          </p>
+          <div className="bg-gray-50 rounded-lg p-6 max-w-lg mx-auto border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Subscription Features</h3>
+            <ul className="text-left space-y-3">
+              <li className="flex items-start">
+                <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-700">Unrestricted access to the Verified Talent Pool</span>
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-700">Detailed performance scores (Theory & Practical)</span>
+              </li>
+              <li className="flex items-start">
+                <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-700">Directly review candidates' real-world project code</span>
+              </li>
+            </ul>
+          </div>
+          <div className="mt-8 text-sm text-gray-500">
+            Current Status: <span className="font-semibold text-red-600">Inactive</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

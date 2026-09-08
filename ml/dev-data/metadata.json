@@ -1,0 +1,11 @@
+{
+  "version": "synthetic-v1",
+  "generatedAt": "2026-09-06T06:37:40.873412",
+  "seed": 42,
+  "environment": "development",
+  "isSynthetic": true,
+  "model1Observations": 10000,
+  "model2Observations": 5000,
+  "uniqueStudents": 250,
+  "topicsCount": 6
+}

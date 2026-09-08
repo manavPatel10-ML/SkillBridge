@@ -21,7 +21,9 @@ import {
   CheckCircle2,
   Terminal,
   Library,
-  Map
+  Map,
+  Target,
+  Zap
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +32,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const studentLinks = [
     { name: "Overview", href: "/dashboard/student", icon: LayoutDashboard },
+    { name: "Learning Path", href: "/dashboard/student/learning-path", icon: Zap },
+    { name: "Job Readiness", href: "/dashboard/student/readiness", icon: Target },
     { name: "Career Paths", href: "/dashboard/student/roles", icon: Map },
     { name: "My Skills", href: "/dashboard/student/skills", icon: Award },
     { name: "Learn", href: "/dashboard/student/learn", icon: Library },

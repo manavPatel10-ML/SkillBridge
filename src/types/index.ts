@@ -1,4 +1,6 @@
 export type ChallengeStatus = 'draft' | 'published' | 'closed' | 'archived';
+export type MatchTier = 'strong' | 'partial' | 'none';
+
 
 export interface CompanyChallenge {
   id?: string;
@@ -63,7 +65,7 @@ export interface ChallengeInterviewQuestion {
   createdAt: string;
 }
 
-export type ChallengeApplicationStatus = 'applied' | 'in_progress' | 'completed' | 'submitted' | 'shortlisted' | 'rejected';
+export type ChallengeApplicationStatus = 'applied' | 'in_progress' | 'completed' | 'submitted' | 'shortlisted' | 'rejected' | 'hired';
 export type ChallengeStageStatus = 'not_started' | 'in_progress' | 'completed';
 
 export interface ChallengeApplication {
@@ -87,6 +89,7 @@ export interface ChallengeApplication {
   interviewScore: number;
   overallScore: number;
   integrityScore: number;
+  interviewFeedback?: string;
 
   theoryAttempt?: {
     questionIds: string[];
@@ -215,3 +218,200 @@ export interface RolePath {
   createdAt: any;
   updatedAt: any;
 }
+
+export interface RecommendedTask {
+  id: string; // The UI list ID, e.g. "diag_skillId"
+  recommendationId?: string; // The unique UUID generated for ML telemetry
+  type: 'learning' | 'assessment' | 'practice' | 'challenge' | 'practical';
+  itemId: string;
+  skillId: string;
+  title: string;
+  description: string;
+  reason: string;
+  priorityScore: number;
+  metadata?: any;
+}
+
+import { AdvancedMLModel1Features, AdvancedMLModel2Features } from "@/types/ml-features";
+
+export interface MLTelemetryEvent {
+  telemetryId?: string;
+  recommendationId: string;
+  studentId: string;
+  lifecycleState: 'RECOMMENDED' | 'STARTED' | 'COMPLETED' | 'WAITING_FOR_EVALUATION' | 'SCORED' | 'OUTCOME_RECORDED' | 'ABANDONED';
+  timestamp: any; // Firestore serverTimestamp or Date string
+  startedAt?: any; // When the user clicks Start
+  
+  modelVersion: string;
+  engineVersion: string;
+  recommendationSource: 'baseline' | 'trained_ml' | 'manual' | 'admin';
+  
+  topicId: string | null;
+  skillId: string;
+  taskId: string;
+  taskType: 'learning' | 'assessment' | 'practice' | 'challenge' | 'practical';
+  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'UNKNOWN';
+  
+  featureSnapshot: Partial<AdvancedMLModel1Features & AdvancedMLModel2Features>;
+  
+  predictionSnapshot: {
+    predictedScore: number | null;
+    predictedLevel: string | null;
+    confidence: number | null;
+    predictionSource: string;
+  };
+  
+  recommendationSnapshot: {
+    recommendedTaskType: string;
+    priorityScore: number;
+    reason: string;
+  };
+  
+  environment?: 'development' | 'test' | 'beta' | 'production';
+  isTestData?: boolean;
+  isSynthetic?: boolean;
+  shadow?: boolean;
+  userClassification?: 'REAL_PILOT_USER' | 'TEST_USER' | 'SYNTHETIC_USER' | 'SHADOW_RECORD';
+  pilotCohortId?: string;
+  isPilotEligible?: boolean;
+  shadowRecord?: ShadowEvaluationRecord;
+
+  actualOutcome: {
+    recordedAt: any;
+    score: number | null;
+    passed: boolean | null;
+    attempts: number | null;
+    evaluationStatus: 'completed' | 'failed' | 'aborted' | 'in_progress';
+  } | null;
+}
+
+export interface PilotTaskFeedback {
+  id?: string;
+  recommendationId: string;
+  studentId: string;
+  taskId: string;
+  taskType: string;
+  taskUnderstandable: boolean;
+  difficultyAppropriate: 'too_easy' | 'appropriate' | 'too_difficult';
+  feltReadyForNextTask: boolean;
+  recommendationRating: number; // 1 to 5
+  comments?: string;
+  createdAt: string;
+}
+
+export interface ShadowEvaluationRecord {
+  studentId: string;
+  recommendationId?: string;
+  timestamp: string;
+  modelVersion?: string;
+  candidateCount?: number;
+  state?: {
+    theoryScore: number;
+    practicalScore: number;
+    recentAttemptsCount: number;
+  };
+  deterministicTask: {
+    taskId: string;
+    type: string;
+    priority: number;
+    reason: string;
+    difficulty?: string;
+    topicId?: string;
+  };
+  mlTask: {
+    taskId: string;
+    type: string;
+    predictedScore: number;
+    assignmentScore: number;
+    reason: string;
+    difficulty?: string;
+    topicId?: string;
+  };
+  model1Prediction?: {
+    predictedNextScore: number;
+    modelVersion: string;
+    modelStatus: string;
+    predictionTimestamp: string;
+    featureVersion: string;
+  };
+  model2Ranking?: {
+    topCandidates: Array<{
+      taskId: string;
+      taskType: string;
+      model2Prob: number;
+      adaptiveScore: number;
+      rank: number;
+    }>;
+  };
+  deterministicRank?: number;
+  mlRank?: number;
+  agreement: boolean;
+  divergence?: boolean;
+  rankDifference: number;
+  divergenceReason: string;
+  shadow?: boolean;
+
+  // Phase 37 Pre-Task Decision Quality Comparison
+  decisionQuality?: {
+    deterministicQualityScore: number;
+    mlQualityScore: number;
+    qualityDelta: number;
+    qualityWinner: 'ML_BETTER' | 'DETERMINISTIC_BETTER' | 'APPROX_EQUAL';
+    deterministicWeakTopicScore: number;
+    mlWeakTopicScore: number;
+    deterministicMasteryGapScore: number;
+    mlMasteryGapScore: number;
+    deterministicDifficultyFit: number;
+    mlDifficultyFit: number;
+    deterministicFreshnessScore: number;
+    mlFreshnessScore: number;
+    deterministicTaskType: string;
+    mlTaskType: string;
+    deterministicConfidence: number;
+    mlConfidence: number;
+  };
+
+  // Phase 38 Progressive Complexity Tracking
+  progressiveComplexity?: {
+    currentComplexity: number;
+    targetComplexity: number;
+    complexityDelta: number;
+    performanceBand: string;
+    scaffoldingAdjustment: string;
+    remediationRequired: boolean;
+    reasoning: string;
+  };
+}
+
+
+export type BetaFeedbackCategory = 
+  | 'AUTH' 
+  | 'ONBOARDING' 
+  | 'LEARNING' 
+  | 'PRACTICE' 
+  | 'ASSESSMENT' 
+  | 'PRACTICAL' 
+  | 'RECOMMENDATION' 
+  | 'PROFILE' 
+  | 'COMPANY' 
+  | 'HIRING' 
+  | 'PERFORMANCE' 
+  | 'SECURITY' 
+  | 'OTHER';
+
+export interface BetaFeedback {
+  id?: string;
+  userId: string;
+  userRole: 'student' | 'company' | 'admin';
+  userEmail?: string;
+  category: BetaFeedbackCategory;
+  issueType: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  affectedFlow: string;
+  environment: string;
+  timestamp: any;
+  status: 'new' | 'investigating' | 'resolved' | 'wont_fix';
+}
+
+export const TYPES_VERSION = '1.0.0';

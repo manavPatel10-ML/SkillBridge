@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { Loader2, Code, Clock, Activity, ArrowLeft, PlayCircle, CheckCircle2, FileText, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type PracticalTask = {
   id: string;
@@ -29,6 +29,8 @@ export default function PracticalTaskDetailPage({ params }: Props) {
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const recId = searchParams.get('recId');
   
   const [task, setTask] = useState<PracticalTask | null>(null);
   const [skillName, setSkillName] = useState("");
@@ -171,7 +173,11 @@ export default function PracticalTaskDetailPage({ params }: Props) {
                   </div>
                 </div>
                 <button
-                  onClick={() => router.push(`/dashboard/student/practical-tasks/${task.id}/take`)}
+                  onClick={() => {
+                    let url = `/dashboard/student/practical-tasks/${task.id}/take`;
+                    if (recId) url += `?recId=${recId}`;
+                    router.push(url);
+                  }}
                   className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700"
                 >
                   <PlayCircle className="w-5 h-5 mr-2" />
@@ -239,7 +245,11 @@ export default function PracticalTaskDetailPage({ params }: Props) {
               </div>
             ) : (
               <button
-                onClick={() => router.push(`/dashboard/student/practical-tasks/${task.id}/take`)}
+                onClick={() => {
+                  let url = `/dashboard/student/practical-tasks/${task.id}/take`;
+                  if (recId) url += `?recId=${recId}`;
+                  router.push(url);
+                }}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
               >
                 <PlayCircle className="w-5 h-5 mr-2" />

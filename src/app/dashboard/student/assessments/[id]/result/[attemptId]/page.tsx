@@ -7,6 +7,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { Loader2, ArrowLeft, CheckCircle2, XCircle, Trophy, RotateCcw, ShieldAlert, ShieldCheck, Terminal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PostCompletionNextAction } from "@/components/learning/PostCompletionNextAction";
+import { EngagementAuditService } from "@/lib/pilot-engagement-audit";
 
 type Question = {
   id: string;
@@ -210,6 +212,23 @@ export default function AssessmentResultPage({ params }: { params: Promise<{ id:
           </div>
         </div>
       </div>
+
+      {/* One Clear Next Action Post-Completion Experience */}
+      <PostCompletionNextAction
+        score={attempt.score}
+        maxScore={attempt.maxScore}
+        passed={passed}
+        taskTitle={assessment.title}
+        nextAction={EngagementAuditService.generateNextAction(
+          user?.uid || "student",
+          id,
+          assessment.skillId || "fe_html",
+          attempt.percentage / 100,
+          "frontend"
+        )}
+        onRetake={() => router.push(`/dashboard/student/assessments/${id}`)}
+        showReviewButton={false}
+      />
 
       {/* Answers Review */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

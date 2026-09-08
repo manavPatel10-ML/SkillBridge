@@ -30,7 +30,7 @@ interface Skill {
   category: string;
 }
 
-const STEPS = ["Basic Info", "Theory", "Practical", "Interview", "Review"];
+const STEPS = ["Basic Info", "Theory", "Hiring Task", "Interview", "Review"];
 
 export default function CreateChallengePage() {
   const { user } = useAuth();
@@ -369,8 +369,8 @@ export default function CreateChallengePage() {
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Create Hiring Challenge</h1>
-            <p className="text-sm text-gray-500 mt-1">Design a multi-stage assessment to find the best candidates.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Post New Vacancy</h1>
+            <p className="text-sm text-gray-500 mt-1">Design a multi-stage assessment for this vacancy.</p>
           </div>
         </div>
 
@@ -412,13 +412,13 @@ export default function CreateChallengePage() {
               
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Challenge Title</label>
+                  <label className="block text-sm font-medium text-gray-700">Vacancy Title</label>
                   <input
                     type="text"
                     value={basicInfo.title}
                     onChange={e => setBasicInfo(prev => ({ ...prev, title: e.target.value }))}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                    placeholder="e.g. Senior Frontend Developer Challenge"
+                    placeholder="e.g. Senior Frontend Developer"
                   />
                 </div>
 
@@ -580,7 +580,7 @@ export default function CreateChallengePage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Theory assessment is disabled for this challenge.
+                  Theory assessment is disabled for this vacancy.
                 </div>
               )}
             </div>
@@ -590,14 +590,14 @@ export default function CreateChallengePage() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b pb-2">
-                <h2 className="text-lg font-bold text-gray-900">Practical Task</h2>
+                <h2 className="text-lg font-bold text-gray-900">Hiring Task</h2>
                 <label className="flex items-center cursor-pointer">
                   <div className="relative">
                     <input type="checkbox" className="sr-only" checked={practicalTask.enabled} onChange={e => setPracticalTask(prev => ({...prev, enabled: e.target.checked}))} />
                     <div className={`block w-10 h-6 rounded-full transition-colors ${practicalTask.enabled ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                     <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${practicalTask.enabled ? 'transform translate-x-4' : ''}`}></div>
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">Enable Practical Section</span>
+                  <span className="ml-3 text-sm font-medium text-gray-900">Enable Hiring Task Section</span>
                 </label>
               </div>
 
@@ -697,7 +697,7 @@ export default function CreateChallengePage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Practical assessment is disabled for this challenge.
+                  Hiring task is disabled for this vacancy.
                 </div>
               )}
             </div>

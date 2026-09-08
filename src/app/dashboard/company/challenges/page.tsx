@@ -115,15 +115,15 @@ export default function CompanyChallengesPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hiring Challenges</h1>
-            <p className="text-sm text-gray-500 mt-1">Create and manage your hiring challenges to discover top talent.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Vacancies & Opportunities</h1>
+            <p className="text-sm text-gray-500 mt-1">Create and manage your hiring vacancies to discover top talent.</p>
           </div>
           <Link
             href="/dashboard/company/challenges/create"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create Challenge
+            Post Vacancy
           </Link>
         </div>
 
@@ -140,14 +140,14 @@ export default function CompanyChallengesPage() {
         ) : challenges.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges yet</h3>
-            <p className="text-gray-500 mb-6">Create your first hiring challenge to start assessing candidates.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No vacancies yet</h3>
+            <p className="text-gray-500 mb-6">Create your first vacancy to start assessing candidates.</p>
             <Link
               href="/dashboard/company/challenges/create"
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Challenge
+              Post Vacancy
             </Link>
           </div>
         ) : (
@@ -201,7 +201,7 @@ export default function CompanyChallengesPage() {
                             <Link
                               href={`/dashboard/company/challenges/${challenge.id}/edit`}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                              title="Edit Challenge"
+                              title="Edit Vacancy"
                             >
                               <Edit2 className="w-4 h-4" />
                             </Link>
@@ -210,7 +210,7 @@ export default function CompanyChallengesPage() {
                             onClick={() => handleDelete(challenge.id!)}
                             disabled={deletingId === challenge.id}
                             className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
-                            title="Delete Challenge"
+                            title="Delete Vacancy"
                           >
                             {deletingId === challenge.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

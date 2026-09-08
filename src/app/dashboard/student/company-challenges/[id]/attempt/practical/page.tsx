@@ -51,7 +51,7 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
         const cQ = query(collection(db, "companyChallenges"), where("__name__", "==", id));
         const cSnap = await getDocs(cQ);
         if (cSnap.empty) {
-          setError("Challenge not found.");
+          setError("Vacancy not found.");
           setLoading(false);
           return;
         }
@@ -69,13 +69,17 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
           return;
         }
         const appData = { id: appSnap.docs[0].id, ...appSnap.docs[0].data() } as ChallengeApplication;
-        
-        if (appData.practicalStatus === 'completed') {
+        if (appData.practicalStatus === 'completed' && !['submitted', 'shortlisted', 'rejected', 'hired'].includes(appData.status)) {
           router.push(`/dashboard/student/company-challenges/${id}/attempt`);
           return;
         }
         
         setApplication(appData);
+
+        if (appData.practicalAttempt) {
+          if (appData.practicalAttempt.githubUrl) setGithubUrl(appData.practicalAttempt.githubUrl);
+          if (appData.practicalAttempt.liveUrl) setLiveUrl(appData.practicalAttempt.liveUrl);
+        }
 
         // Fetch Practical Config
         const pSnap = await getDocs(query(collection(db, "challengePracticalTasks"), where("challengeId", "==", id)));
@@ -89,7 +93,8 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
 
         // Initialize practical attempt if not started
         let startedAt = appData.practicalAttempt?.startedAt;
-        if (!startedAt) {
+        const isLocked = ['submitted', 'shortlisted', 'rejected', 'hired'].includes(appData.status);
+        if (!startedAt && !isLocked) {
           startedAt = new Date().toISOString();
           await updateDoc(doc(db, "challengeApplications", appData.id!), {
             "practicalAttempt.startedAt": startedAt,
@@ -97,17 +102,22 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
           });
         }
         
-        // Calculate remaining time
-        const startTimeMs = new Date(startedAt).getTime();
-        const durationMs = pData.durationMinutes * 60 * 1000;
-        const endTimeMs = startTimeMs + durationMs;
-        const nowMs = Date.now();
-
-        if (nowMs >= endTimeMs) {
-          setIsTimeUp(true);
+        if (isLocked) {
           setTimeLeft(0);
-        } else {
-          setTimeLeft(Math.floor((endTimeMs - nowMs) / 1000));
+          setIsTimeUp(true);
+        } else if (startedAt) {
+          // Calculate remaining time
+          const startTimeMs = new Date(startedAt).getTime();
+          const durationMs = pData.durationMinutes * 60 * 1000;
+          const endTimeMs = startTimeMs + durationMs;
+          const nowMs = Date.now();
+
+          if (nowMs >= endTimeMs) {
+            setIsTimeUp(true);
+            setTimeLeft(0);
+          } else {
+            setTimeLeft(Math.floor((endTimeMs - nowMs) / 1000));
+          }
         }
 
       } catch (err) {
@@ -203,17 +213,18 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
         <div className="border-b border-gray-200 bg-gray-50 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{challenge?.title} - Practical</h1>
+            <h1 className="text-xl font-bold text-gray-900">{challenge?.title} - Hiring Task</h1>
             <p className="text-sm text-gray-500 mt-1">{practicalTask?.title}</p>
           </div>
           
           <div className={`flex items-center px-4 py-2 rounded-lg font-bold border ${
+            ['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '') ? 'bg-gray-50 text-gray-700 border-gray-200' :
             isTimeUp ? 'bg-red-50 text-red-700 border-red-200' : 
             (timeLeft !== null && timeLeft < 300) ? 'bg-orange-50 text-orange-700 border-orange-200' : 
             'bg-blue-50 text-blue-700 border-blue-200'
           }`}>
             <Clock className="w-5 h-5 mr-2" />
-            {isTimeUp ? "Time Expired" : timeLeft !== null ? formatTime(timeLeft) : "--:--"}
+            {['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '') ? "Submitted" : isTimeUp ? "Time Expired" : timeLeft !== null ? formatTime(timeLeft) : "--:--"}
           </div>
         </div>
 
@@ -264,7 +275,7 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
                   className="pl-10 block w-full rounded-md border-gray-300 border py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="https://github.com/username/repo"
                   required
-                  disabled={isTimeUp || submitting}
+                  disabled={isTimeUp || submitting || ['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '')}
                 />
               </div>
             </div>
@@ -287,7 +298,7 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
                   className="pl-10 block w-full rounded-md border-gray-300 border py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="https://my-project.vercel.app"
                   required
-                  disabled={isTimeUp || submitting}
+                  disabled={isTimeUp || submitting || ['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '')}
                 />
               </div>
             </div>
@@ -299,19 +310,21 @@ export default function PracticalStagePage({ params }: { params: Promise<{ id: s
             Cancel and Return
           </Link>
           
-          <button
-            type="submit"
-            disabled={submitting || isTimeUp}
-            className="inline-flex justify-center items-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
-          >
-            {submitting ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
-            ) : isTimeUp ? (
-              "Time Expired"
-            ) : (
-              <><CheckCircle2 className="w-5 h-5 mr-2" /> Submit Task</>
-            )}
-          </button>
+          {!['submitted', 'shortlisted', 'rejected', 'hired'].includes(application?.status || '') && (
+            <button
+              type="submit"
+              disabled={submitting || isTimeUp}
+              className="inline-flex justify-center items-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+            >
+              {submitting ? (
+                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
+              ) : isTimeUp ? (
+                "Time Expired"
+              ) : (
+                <><CheckCircle2 className="w-5 h-5 mr-2" /> Submit Task</>
+              )}
+            </button>
+          )}
         </div>
       </form>
     </div>

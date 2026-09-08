@@ -1,0 +1,13 @@
+{
+  "shuffled_metrics": {
+    "Accuracy": 0.6293,
+    "ROC_AUC": 0.4249,
+    "F1": 0.0,
+    "Precision": 0.0,
+    "Recall": 0.0,
+    "LogLoss": 0.7688,
+    "BrierScore": 0.2717
+  },
+  "collapsed": true,
+  "verdict": "PASS: Shuffling targets collapsed ROC-AUC to 0.4249 (random chance is ~0.50)."
+}

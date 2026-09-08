@@ -13,6 +13,7 @@ type CompanyData = {
   website: string;
   contactPerson: string;
   status: string;
+  subscriptionStatus: string;
 };
 
 export default function AdminCompaniesPage() {
@@ -49,6 +50,7 @@ export default function AdminCompaniesPage() {
             website: profile.website || "N/A",
             contactPerson: profile.contactPerson || "N/A",
             status: "Active", // profile.verificationStatus could be used here
+            subscriptionStatus: profile.subscriptionStatus || "inactive",
           };
         });
 
@@ -122,6 +124,12 @@ export default function AdminCompaniesPage() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Subscription
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -156,15 +164,44 @@ export default function AdminCompaniesPage() {
                       <div className="text-sm text-gray-900">{company.contactPerson}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800`}>
                         {company.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${company.subscriptionStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {company.subscriptionStatus.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const { updateDoc, doc } = await import("firebase/firestore");
+                            const newStatus = company.subscriptionStatus === 'active' ? 'inactive' : 'active';
+                            await updateDoc(doc(db, "companyProfiles", company.id), {
+                              subscriptionStatus: newStatus
+                            });
+                            // Opt update
+                            setCompanies(prev => prev.map(c => c.id === company.id ? { ...c, subscriptionStatus: newStatus } : c));
+                          } catch (err) {
+                            console.error(err);
+                            alert("Failed to update subscription status");
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-md text-xs font-medium mr-2"
+                      >
+                        Toggle Sub (Dev)
+                      </button>
+                      <button className="text-gray-400 hover:text-gray-500">
+                        <ExternalLink className="h-5 w-5" />
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-3" />
                     <p className="text-lg font-medium text-gray-900">No companies found</p>
                     <p className="text-sm text-gray-500">Try adjusting your search criteria.</p>

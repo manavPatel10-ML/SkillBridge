@@ -1,0 +1,49 @@
+{
+  "model1_score_calibration": {
+    "binned_calibration": {
+      "0.0-0.4": {
+        "count": 300,
+        "mean_pred": 0.2715,
+        "mean_true": 0.2838,
+        "mean_error": -0.0123
+      },
+      "0.4-0.6": {
+        "count": 532,
+        "mean_pred": 0.508,
+        "mean_true": 0.5047,
+        "mean_error": 0.0032
+      },
+      "0.6-0.8": {
+        "count": 266,
+        "mean_pred": 0.6797,
+        "mean_true": 0.6823,
+        "mean_error": -0.0025
+      },
+      "0.8-1.0": {
+        "count": 400,
+        "mean_pred": 0.9282,
+        "mean_true": 0.9313,
+        "mean_error": -0.0031
+      }
+    },
+    "overall_mean_residual": -0.0026
+  },
+  "model2_probability_calibration": {
+    "expected_calibration_error_ECE": 0.0396,
+    "brier_score": 0.0438,
+    "prob_true": [
+      0.0238,
+      0.2174,
+      0.4762,
+      0.55,
+      0.9753
+    ],
+    "prob_pred": [
+      0.0406,
+      0.2792,
+      0.4827,
+      0.6615,
+      0.9768
+    ]
+  }
+}

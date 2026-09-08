@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, doc, getDoc, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { Loader2, ArrowLeft, Clock, BookOpen, Target, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Assessment = {
   id: string;
@@ -44,6 +44,8 @@ export default function AssessmentDetailsPage({ params }: { params: Promise<{ id
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const recId = searchParams.get('recId');
   
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -92,7 +94,9 @@ export default function AssessmentDetailsPage({ params }: { params: Promise<{ id
       // Check for existing in_progress attempt
       const inProgressAttempt = attempts.find(a => a.status === "in_progress");
       if (inProgressAttempt) {
-        router.push(`/dashboard/student/assessments/${assessment.id}/take?attemptId=${inProgressAttempt.id}`);
+        let url = `/dashboard/student/assessments/${assessment.id}/take?attemptId=${inProgressAttempt.id}`;
+        if (recId) url += `&recId=${recId}`;
+        router.push(url);
         return;
       }
 
@@ -169,7 +173,9 @@ export default function AssessmentDetailsPage({ params }: { params: Promise<{ id
         suspicious: false,
       });
 
-      router.push(`/dashboard/student/assessments/${assessment.id}/take?attemptId=${attemptRef.id}`);
+      let url = `/dashboard/student/assessments/${assessment.id}/take?attemptId=${attemptRef.id}`;
+      if (recId) url += `&recId=${recId}`;
+      router.push(url);
     } catch (error) {
       console.error("Error starting assessment:", error);
       setStarting(false);

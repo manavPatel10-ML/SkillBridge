@@ -115,6 +115,41 @@ export default function AdminDashboardPage() {
           );
         })}
       </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+        <h2 className="text-xl font-bold text-gray-900">Beta Operations & Management</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a
+            href="/dashboard/admin/beta-health"
+            className="p-4 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-between"
+          >
+            <div>
+              <p className="font-bold text-blue-900">Beta Health & Funnel</p>
+              <p className="text-xs text-blue-700 mt-1">Real user activity, funnel conversions, KPIs</p>
+            </div>
+          </a>
+
+          <a
+            href="/dashboard/admin/feedback"
+            className="p-4 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-between"
+          >
+            <div>
+              <p className="font-bold text-indigo-900">Beta Feedback</p>
+              <p className="text-xs text-indigo-700 mt-1">View reported issues by beta students & companies</p>
+            </div>
+          </a>
+
+          <a
+            href="/dashboard/admin/ml-readiness"
+            className="p-4 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 transition-colors flex items-center justify-between"
+          >
+            <div>
+              <p className="font-bold text-purple-900">ML Training Gate</p>
+              <p className="text-xs text-purple-700 mt-1">Observation counts & baseline fallback status</p>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

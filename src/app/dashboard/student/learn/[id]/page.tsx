@@ -7,6 +7,7 @@ import { Loader2, ArrowLeft, Terminal, AlertTriangle, Lightbulb, Code2 } from "l
 import Link from "next/link";
 import { LearningTopic } from "@/types";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StudentLearningContentPage({ params }: { params: { id: string } }) {
   return (
@@ -24,6 +25,38 @@ function LearningContentInner({ params }: { params: { id: string } }) {
   const [skillName, setSkillName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { user } = useAuth();
+  const recId = searchParams.get('recId');
+
+  useEffect(() => {
+    // Record ML Telemetry for viewing learning content
+    if (recId && user && topic) {
+      const recordView = async () => {
+        try {
+          const token = await user.getIdToken();
+          await fetch('/api/ml-telemetry/outcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              recommendationId: recId,
+              score: 100, // 100% since it's just content consumption
+              passed: true,
+              attempts: 1,
+              evaluationStatus: 'completed'
+            })
+          });
+        } catch (e) {
+          console.error("Failed to record learning telemetry:", e);
+        }
+      };
+      // Adding a small delay to simulate meaningful reading time
+      const timer = setTimeout(() => recordView(), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [recId, user, topic?.id]);
 
   useEffect(() => {
     const fetchData = async () => {

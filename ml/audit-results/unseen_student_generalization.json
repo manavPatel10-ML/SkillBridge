@@ -1,0 +1,24 @@
+{
+  "model1_unseen_students": {
+    "num_test_students": 30,
+    "test_observations": 1559,
+    "metrics": {
+      "MAE": 0.0764,
+      "RMSE": 0.1017,
+      "R2": 0.8812
+    }
+  },
+  "model2_unseen_students": {
+    "num_test_students": 15,
+    "test_observations": 738,
+    "metrics": {
+      "Accuracy": 0.935,
+      "ROC_AUC": 0.9743,
+      "F1": 0.8519,
+      "Precision": 0.9079,
+      "Recall": 0.8023,
+      "LogLoss": 0.1675,
+      "BrierScore": 0.0503
+    }
+  }
+}

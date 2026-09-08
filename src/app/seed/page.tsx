@@ -491,11 +491,26 @@ export default function SeedPage() {
     return <div className="p-8">Please log in as an admin to run the seeder.</div>;
   }
 
+  const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'production';
+
   return (
     <div className="max-w-2xl mx-auto mt-12 p-8 bg-white border rounded-xl shadow-sm">
-      <h1 className="text-2xl font-bold mb-4">Development Seed Script</h1>
+      <h1 className="text-2xl font-bold mb-4">Curriculum Seed Script</h1>
+
+      {isProduction && (
+        <div className="mb-6 p-4 border border-yellow-400 bg-yellow-50 rounded-lg">
+          <p className="text-yellow-800 font-semibold text-sm">⚠️ PRODUCTION ENVIRONMENT</p>
+          <p className="text-yellow-700 text-sm mt-1">
+            You are running this seed script in <strong>production</strong>. This tool writes
+            legitimate curriculum content (skills, assessments, questions) to Firestore.
+            It does NOT seed test users or synthetic data. Verify before running.
+          </p>
+        </div>
+      )}
+
       <p className="text-gray-600 mb-6">
         This will populate the Firestore database with initial skills, assessments, and questions.
+        This is curriculum content, not test/user data.
       </p>
 
       <div className="flex items-center mb-6">

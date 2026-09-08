@@ -75,6 +75,8 @@ function OnboardingForm() {
           companyDescription: "",
           location: "",
           verificationStatus: "pending",
+          subscriptionStatus: "inactive",
+          subscriptionTier: "free",
           updatedAt: serverTimestamp(),
         });
         window.location.href = "/dashboard/company";

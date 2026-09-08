@@ -1,0 +1,201 @@
+{
+  "phase": 34,
+  "timestamp": "2026-09-06T06:42:09.575475",
+  "oracle_shortcut_removed": true,
+  "model1": {
+    "MAE": 0.0849,
+    "RMSE": 0.1111,
+    "R2": 0.8418,
+    "Status": "EXPERIMENTAL"
+  },
+  "model2": {
+    "model2": {
+      "Accuracy": 0.9107,
+      "ROC_AUC": 0.9731,
+      "F1": 0.8673,
+      "LogLoss": 0.2009
+    },
+    "baseline": {
+      "Accuracy": 0.3293,
+      "ROC_AUC": 0.5,
+      "F1": 0.4955,
+      "LogLoss": 24.1733
+    },
+    "comparison": {
+      "roc_auc_gain": 0.4731,
+      "accuracy_gain": 0.5814,
+      "logloss_reduction": 23.9724
+    }
+  },
+  "ablation": {
+    "A_Model1_Prediction_Only": {
+      "Accuracy": 0.8853,
+      "ROC_AUC": 0.9597,
+      "F1": 0.823,
+      "LogLoss": 0.2435
+    },
+    "B_Mastery_Topic_State_Only": {
+      "Accuracy": 0.8707,
+      "ROC_AUC": 0.9421,
+      "F1": 0.8079,
+      "LogLoss": 0.3043
+    },
+    "C_Previous_History_Only": {
+      "Accuracy": 0.58,
+      "ROC_AUC": 0.5922,
+      "F1": 0.4068,
+      "LogLoss": 0.774
+    },
+    "D_Candidate_Metadata_Only": {
+      "Accuracy": 0.8613,
+      "ROC_AUC": 0.9419,
+      "F1": 0.7778,
+      "LogLoss": 0.3073
+    },
+    "E_Full_Feature_Set": {
+      "Accuracy": 0.904,
+      "ROC_AUC": 0.9681,
+      "F1": 0.8588,
+      "LogLoss": 0.2316
+    }
+  },
+  "target_shuffle": {
+    "Accuracy": 0.576,
+    "ROC_AUC": 0.5046,
+    "F1": 0.2838,
+    "LogLoss": 0.8248
+  },
+  "multi_seed": {
+    "seeds": [
+      7,
+      21,
+      42,
+      100,
+      2026
+    ],
+    "mean_roc_auc": 0.9712,
+    "std_roc_auc": 0.0024,
+    "mean_accuracy": 0.9029,
+    "mean_f1": 0.8557,
+    "mean_logloss": 0.2213
+  },
+  "unseen_student": {
+    "Accuracy": 0.9371,
+    "ROC_AUC": 0.9837,
+    "F1": 0.8793,
+    "LogLoss": 0.1503
+  },
+  "topk_selection": {
+    "observed_simulated_outcomes": {
+      "ml": {
+        "top_1_pass_rate": 0.32,
+        "top_3_pass_rate": 0.24,
+        "top_5_pass_rate": 0.168,
+        "expected_score": 0.5066,
+        "weak_topic_targeting": 1.0,
+        "difficulty_fit": 0.4563,
+        "repetition_rate": 0.9
+      },
+      "deterministic_baseline": {
+        "top_1_pass_rate": 0.22,
+        "top_3_pass_rate": 0.22,
+        "top_5_pass_rate": 0.168,
+        "expected_score": 0.4245,
+        "weak_topic_targeting": 1.0,
+        "difficulty_fit": 0.4696,
+        "repetition_rate": 0.12
+      }
+    }
+  },
+  "shadow_evaluation": {
+    "total_shadow_states": 98,
+    "agreement_rate": 0.7653,
+    "divergence_rate": 0.2347,
+    "average_ranking_difference": 0.3571,
+    "top_k_overlap": 0.8639,
+    "model_confidence": 0.8741,
+    "baseline_confidence": 128.2857,
+    "sample_logs": [
+      {
+        "studentId": "synth_student_0001",
+        "state": {
+          "currentMastery": 0.0,
+          "weakestTopicMastery": 0.0,
+          "previousTasksCount": 0
+        },
+        "deterministicTask": "topic_react_basics_practice_problem",
+        "mlTask": "topic_react_basics_practice_problem",
+        "model1Prediction": 0.3909,
+        "model2Score": 0.0296,
+        "agreement": true,
+        "reason": "Aligned priority"
+      },
+      {
+        "studentId": "synth_student_0002",
+        "state": {
+          "currentMastery": 0.0,
+          "weakestTopicMastery": 0.0,
+          "previousTasksCount": 0
+        },
+        "deterministicTask": "topic_react_basics_practice_problem",
+        "mlTask": "topic_react_basics_practice_problem",
+        "model1Prediction": 0.2451,
+        "model2Score": 0.0045,
+        "agreement": true,
+        "reason": "Aligned priority"
+      },
+      {
+        "studentId": "synth_student_0003",
+        "state": {
+          "currentMastery": 0.0,
+          "weakestTopicMastery": 0.0,
+          "previousTasksCount": 0
+        },
+        "deterministicTask": "topic_ts_basics_assessment",
+        "mlTask": "topic_ts_basics_practice_problem",
+        "model1Prediction": 0.4417,
+        "model2Score": 0.005,
+        "agreement": false,
+        "reason": "ML preferred task with success probability 0.01 over baseline priority 56.00"
+      },
+      {
+        "studentId": "synth_student_0004",
+        "state": {
+          "currentMastery": 0.0,
+          "weakestTopicMastery": 0.0,
+          "previousTasksCount": 0
+        },
+        "deterministicTask": "topic_react_basics_assessment",
+        "mlTask": "topic_react_basics_assessment",
+        "model1Prediction": 0.5318,
+        "model2Score": 0.4377,
+        "agreement": true,
+        "reason": "Aligned priority"
+      },
+      {
+        "studentId": "synth_student_0005",
+        "state": {
+          "currentMastery": 0.0,
+          "weakestTopicMastery": 0.0,
+          "previousTasksCount": 0
+        },
+        "deterministicTask": "topic_react_state_practice_problem",
+        "mlTask": "topic_react_state_practice_problem",
+        "model1Prediction": 0.4211,
+        "model2Score": 0.002,
+        "agreement": true,
+        "reason": "Aligned priority"
+      }
+    ]
+  },
+  "production_boundaries": {
+    "model1_real_observations": 0,
+    "model1_real_threshold": 5000,
+    "model1_status": "NOT_READY",
+    "model2_real_observations": 0,
+    "model2_real_threshold": 1000,
+    "model2_status": "NOT_READY",
+    "deterministic_baselines_active": true,
+    "shadow_eval_mutations": false
+  }
+}

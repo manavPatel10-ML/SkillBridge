@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CompanyChallenge } from "@/types";
+import { isCandidateStrongMatch } from "@/lib/candidate-matching";
 import Link from "next/link";
 import { 
   Briefcase, 
@@ -131,7 +132,7 @@ export default function StudentCompanyChallengesPage() {
       
       let matchTier: MatchTier = 'none';
       if (required.length > 0) {
-        if (matchedIds.length === required.length) matchTier = 'strong';
+        if (isCandidateStrongMatch(required, verifiedSkills)) matchTier = 'strong';
         else if (matchedIds.length > 0) matchTier = 'partial';
       }
 
@@ -169,8 +170,8 @@ export default function StudentCompanyChallengesPage() {
       <div className="max-w-7xl mx-auto space-y-6 pb-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Company Hiring Challenges</h1>
-            <p className="text-sm text-gray-500 mt-1">Discover challenges matched to your verified skills.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Company Vacancies</h1>
+            <p className="text-sm text-gray-500 mt-1">Discover vacancies matched to your verified skills.</p>
           </div>
         </div>
 
@@ -179,7 +180,7 @@ export default function StudentCompanyChallengesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search challenges, roles, or companies..."
+              placeholder="Search vacancies, roles, or companies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -207,7 +208,7 @@ export default function StudentCompanyChallengesPage() {
         ) : processedChallenges.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
             <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No challenges found</h3>
+            <h3 className="text-lg font-medium text-gray-900">No vacancies found</h3>
             <p className="text-gray-500 mt-2 text-sm">
               Try adjusting your search filters or check back later for new opportunities.
             </p>
@@ -303,7 +304,7 @@ export default function StudentCompanyChallengesPage() {
                     )}
                     {challenge.practicalRequired && (
                       <span className="inline-flex items-center px-2 py-1 rounded bg-slate-50 text-slate-700 text-xs font-medium border border-slate-200">
-                        <Code className="w-3 h-3 mr-1" /> Practical
+                        <Code className="w-3 h-3 mr-1" /> Hiring Task
                       </span>
                     )}
                     {challenge.interviewRequired && (
