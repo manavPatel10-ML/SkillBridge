@@ -7,19 +7,22 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "
 import { Loader2, Code, Clock, Activity, ArrowLeft, PlayCircle, CheckCircle2, FileText, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PracticalTask } from "@/types";
 
-type PracticalTask = {
-  id: string;
-  skillId: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  durationMinutes: number;
-  instructions: string;
-  requirements: string[];
-  submissionTypes: string[];
-  evaluationCriteria: { criterion: string; weight: number }[];
-};
+function normalizeEvaluationCriteria(criteria: any): { criterion: string; weight: number }[] {
+  if (!criteria) return [];
+  if (Array.isArray(criteria)) return criteria;
+  if (typeof criteria === "object") {
+    return Object.entries(criteria).map(([criterion, weight]) => ({
+      criterion: criterion
+        .replace(/([A-Z])/g, " $1")
+        .replace(/_/g, " ")
+        .replace(/^./, str => str.toUpperCase()),
+      weight: Number(weight) || 0
+    }));
+  }
+  return [];
+}
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -307,7 +310,7 @@ export default function PracticalTaskDetailPage({ params }: Props) {
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4">Evaluation Criteria</h3>
             <div className="space-y-4">
-              {(task.evaluationCriteria || []).map((item, idx) => (
+              {normalizeEvaluationCriteria(task.evaluationCriteria).map((item, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">{item.criterion}</span>

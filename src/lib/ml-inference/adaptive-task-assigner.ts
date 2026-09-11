@@ -1,4 +1,4 @@
-import { StudentSkillScore, LearningTopic, PracticeProblem, RecommendedTask } from "@/types";
+import { StudentSkillScore, LearningTopic, PracticeProblem, RecommendedTask, PracticalTask } from "@/types";
 import { PerformancePredictor } from "./model1-predictor";
 import { TelemetryService } from "../ml-telemetry";
 import { AdaptiveEngine, Assessment, Skill } from "../adaptive-engine";
@@ -11,6 +11,7 @@ export interface AssignNextTaskContext {
   learningTopics: LearningTopic[];
   practiceProblems: PracticeProblem[];
   assessments: Assessment[];
+  practicalTasks?: PracticalTask[];
   recentAttempts: any[]; // For repetition penalty
 }
 

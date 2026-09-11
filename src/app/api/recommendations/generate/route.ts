@@ -3,7 +3,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { AdaptiveTaskAssigner } from '@/lib/ml-inference/adaptive-task-assigner';
 import { TelemetryService } from '@/lib/ml-telemetry';
 import { v4 as uuidv4 } from 'uuid';
-import { StudentSkillScore, LearningTopic, PracticeProblem, RecommendedTask } from '@/types';
+import { StudentSkillScore, LearningTopic, PracticeProblem, RecommendedTask, PracticalTask } from '@/types';
 import { Assessment, Skill } from '@/lib/adaptive-engine';
 import { ShadowEvaluator } from '@/lib/ml-inference/shadow-evaluator';
 
@@ -30,14 +30,18 @@ export async function POST(req: NextRequest) {
       topicsSnap,
       practiceSnap,
       assessmentSnap,
-      attemptsSnap
+      attemptsSnap,
+      practicalTasksSnap,
+      practicalAttemptsSnap
     ] = await Promise.all([
       adminDb.collection('skillScores').where('studentId', '==', studentId).get(),
       adminDb.collection('skills').get(),
       adminDb.collection('learningTopics').where('active', '==', true).get(),
       adminDb.collection('practiceProblems').where('active', '==', true).get(),
       adminDb.collection('assessments').where('active', '==', true).get(),
-      adminDb.collection('taskAttempts').where('studentId', '==', studentId).get()
+      adminDb.collection('taskAttempts').where('studentId', '==', studentId).get(),
+      adminDb.collection('practicalTasks').where('active', '==', true).get(),
+      adminDb.collection('practicalTaskAttempts').where('studentId', '==', studentId).get()
     ]);
 
     const skillScores = skillScoresSnap.docs.map(d => d.data() as StudentSkillScore);
@@ -45,14 +49,31 @@ export async function POST(req: NextRequest) {
     const learningTopics = topicsSnap.docs.map(d => ({ id: d.id, ...d.data() } as LearningTopic));
     const practiceProblems = practiceSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticeProblem));
     const assessments = assessmentSnap.docs.map(d => ({ id: d.id, skillId: d.data().skillId, title: d.data().title } as Assessment));
+    const practicalTasks = practicalTasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticalTask));
     
-    const recentAttempts = attemptsSnap.docs.map(d => {
+    const taskAttemptsList = attemptsSnap.docs.map(d => {
       const data = d.data();
       return {
         taskId: data.taskId,
+        skillId: data.skillId,
+        passed: data.passed,
+        status: data.status,
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
       };
     });
+
+    const practicalAttemptsList = practicalAttemptsSnap.docs.map(d => {
+      const data = d.data();
+      return {
+        taskId: data.taskId,
+        skillId: data.skillId,
+        status: data.status,
+        passed: data.evaluation?.percentage >= 70,
+        createdAt: data.startedAt?.toDate ? data.startedAt.toDate().toISOString() : data.startedAt
+      };
+    });
+
+    const recentAttempts = [...taskAttemptsList, ...practicalAttemptsList];
 
     const context = {
       skillScores,
@@ -60,6 +81,7 @@ export async function POST(req: NextRequest) {
       learningTopics,
       practiceProblems,
       assessments,
+      practicalTasks,
       recentAttempts
     };
 

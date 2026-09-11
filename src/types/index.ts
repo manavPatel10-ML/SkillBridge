@@ -53,6 +53,46 @@ export interface ChallengePracticalTask {
   }[];
 }
 
+export interface PracticalTask {
+  id: string;
+  title: string;
+  description: string;
+  skillId: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | string;
+  durationMinutes: number;
+  instructions: string;
+  requirements: string[];
+  submissionTypes: string[];
+  evaluationCriteria?: Record<string, number> | { criterion: string; weight: number }[];
+  prerequisites?: string[];
+  active?: boolean;
+}
+
+export interface PracticalTaskAttempt {
+  id?: string;
+  studentId: string;
+  taskId: string;
+  skillId: string;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  startedAt: any;
+  submittedAt?: any;
+  timeSpent?: number;
+  submission?: {
+    code?: string;
+    explanation?: string;
+    githubUrl?: string;
+    liveUrl?: string;
+  };
+  evaluation?: {
+    status: 'pending_review' | 'evaluated' | 'rejected';
+    score?: number;
+    percentage?: number;
+    feedback?: string;
+    evaluatedAt?: any;
+    evaluatorId?: string;
+  };
+}
+
 export interface ChallengeInterviewQuestion {
   id?: string;
   challengeId: string;

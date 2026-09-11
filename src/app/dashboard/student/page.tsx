@@ -468,24 +468,42 @@ export default function StudentDashboard() {
           )}
 
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Recommended Practical Tasks</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Recommended Practical Tasks</h3>
+              <Link href="/dashboard/student/practical-tasks" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                View All
+              </Link>
+            </div>
             
             {recommendedTasks.length > 0 ? (
               <div className="space-y-4">
                 {recommendedTasks.map(task => (
-                  <div key={task.id} className="p-4 border rounded-lg hover:border-blue-500 transition-colors">
-                    <h4 className="font-semibold text-gray-900">{task.title}</h4>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.description}</p>
-                    <div className="flex items-center mt-3 text-xs font-medium space-x-3">
-                      <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                        {task.difficulty}
-                      </span>
-                      <span className="text-gray-500 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {task.durationMinutes} min
+                  <Link 
+                    key={task.id} 
+                    href={`/dashboard/student/practical-tasks/${task.id}`}
+                    className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {task.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.description}</p>
+                        <div className="flex items-center mt-3 text-xs font-medium space-x-3">
+                          <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded capitalize font-medium">
+                            {task.difficulty}
+                          </span>
+                          <span className="text-gray-500 flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {task.durationMinutes || task.estimatedMinutes || 60} min
+                          </span>
+                        </div>
+                      </div>
+                      <span className="shrink-0 inline-flex items-center text-sm font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                        Start Task <ArrowRight className="w-4 h-4 ml-1" />
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -493,10 +511,16 @@ export default function StudentDashboard() {
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                   <Code className="w-8 h-8 text-gray-400" />
                 </div>
-                <h4 className="text-md font-medium text-gray-900">No tasks available yet</h4>
-                <p className="text-sm text-gray-500 mt-1 max-w-sm">
-                  We're currently preparing new practical tasks for your branch ({profile?.branch || "your field"}). Check back later!
+                <h4 className="text-md font-medium text-gray-900">Explore Practical Tasks</h4>
+                <p className="text-sm text-gray-500 mt-1 max-w-sm mb-4">
+                  Hands-on projects and coding challenges are available across Frontend, Backend, and Full Stack career paths.
                 </p>
+                <Link
+                  href="/dashboard/student/practical-tasks"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Browse Task Catalog
+                </Link>
               </div>
             )}
           </div>
