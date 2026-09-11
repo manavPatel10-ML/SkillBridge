@@ -205,6 +205,7 @@ export interface LearningTopic {
   commonMistakes: string;
   active: boolean;
   order: number;
+  prerequisiteTopicId?: string;
   createdAt: any;
   updatedAt: any;
 }

@@ -56,8 +56,11 @@ export default function StudentPracticePage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const s = params.get('search');
+    const skillParam = params.get('skillId');
     if (s) {
       setSearchQuery(s);
+    } else if (skillParam) {
+      setSearchQuery(skillParam);
     }
   }, []);
 
@@ -575,8 +578,22 @@ export default function StudentPracticePage() {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     <Code2 className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-lg font-medium text-gray-900">No practice problems available</p>
-                    <p className="text-sm text-gray-500">Check back later for new coding challenges.</p>
+                    <p className="text-lg font-medium text-gray-900">
+                      {searchQuery ? `No practice problems found for "${searchQuery}"` : "No practice problems available"}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {searchQuery 
+                        ? "Try clearing your search query or selecting another skill." 
+                        : "Practice problems are being configured for your active curriculum."}
+                    </p>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="mt-4 inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Clear Filter
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

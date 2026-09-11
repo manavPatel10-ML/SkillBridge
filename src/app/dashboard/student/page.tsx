@@ -53,6 +53,8 @@ export default function StudentDashboard() {
   const [skillScores, setSkillScores] = useState<any[]>([]);
   const [practiceAttempts, setPracticeAttempts] = useState<any[]>([]);
   const [assessmentAttempts, setAssessmentAttempts] = useState<any[]>([]);
+  const [targetRole, setTargetRole] = useState<any>(null);
+  const [topRecommendation, setTopRecommendation] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,6 +134,7 @@ export default function StudentDashboard() {
         if (profileData && profileData.targetRoleId) {
           const roleDoc = await getDoc(doc(db, "roles", profileData.targetRoleId));
           if (roleDoc.exists()) {
+            setTargetRole({ id: roleDoc.id, ...roleDoc.data() });
             activeSkillIds = roleDoc.data().requiredSkillIds || [];
           }
         }
@@ -170,6 +173,23 @@ export default function StudentDashboard() {
           query(collection(db, "skillScores"), where("studentId", "==", user.uid))
         );
         setSkillScores(scoresSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        // Fetch Deterministic Adaptive Recommendations from server-side engine
+        try {
+          const token = await user.getIdToken();
+          const recRes = await fetch('/api/recommendations/generate', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (recRes.ok) {
+            const recJson = await recRes.json();
+            if (recJson.recommendations && recJson.recommendations.length > 0) {
+              setTopRecommendation(recJson.recommendations[0]);
+            }
+          }
+        } catch (recErr) {
+          console.warn("Could not fetch adaptive recommendations for dashboard:", recErr);
+        }
 
       } catch (error) {
         console.error("Error fetching overview data:", error);
@@ -275,48 +295,115 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Resume Next Activity for Returning Students */}
-          {(stats.completedAssessments > 0 || stats.practiceSolved > 0) && (
+          {/* Adaptive Next Task from Deterministic Engine */}
+          {topRecommendation ? (
             <div className="bg-white p-6 rounded-xl border-2 border-blue-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
                     <Zap className="w-3 h-3 text-blue-600" />
-                    Recommended Next Activity
+                    Adaptive Next Task
+                  </span>
+                  <span className="text-xs text-gray-500 font-medium capitalize">
+                    {topRecommendation.type}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">
-                  CSS Selectors & Box Model Practice
+                  {topRecommendation.title}
                 </h3>
                 <p className="text-sm text-gray-600 max-w-lg">
-                  Pick up right where you left off. Sourced directly from your deterministic adaptive curriculum.
+                  {topRecommendation.reason || topRecommendation.description}
                 </p>
               </div>
               <Link
-                href="/dashboard/student/practice/fe_css_intro_practice?recId=rec_resume_dash"
+                href={
+                  topRecommendation.type === 'learning'
+                    ? `/dashboard/student/learn/${topRecommendation.itemId}?recId=${topRecommendation.recommendationId || 'rec_dash'}`
+                    : topRecommendation.type === 'assessment'
+                    ? `/dashboard/student/assessments/${topRecommendation.itemId}?recId=${topRecommendation.recommendationId || 'rec_dash'}`
+                    : topRecommendation.type === 'practical'
+                    ? `/dashboard/student/practical-tasks/${topRecommendation.itemId}?recId=${topRecommendation.recommendationId || 'rec_dash'}`
+                    : `/dashboard/student/practice/${topRecommendation.itemId}?recId=${topRecommendation.recommendationId || 'rec_dash'}`
+                }
                 className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm"
               >
-                <span>Continue</span>
+                <span>
+                  {topRecommendation.type === 'learning' ? 'Learn Concept' : topRecommendation.type === 'assessment' ? 'Take Assessment' : 'Start Task'}
+                </span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">
+                    <Zap className="w-3 h-3 text-indigo-600" />
+                    Getting Started
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {targetRole ? `Career Track: ${targetRole.title}` : "Begin Your Adaptive Learning Journey"}
+                </h3>
+                <p className="text-sm text-gray-600 max-w-lg">
+                  {targetRole 
+                    ? `Explore foundational topics and coding problems aligned with ${targetRole.title}.`
+                    : "Select a target career path to receive personalized, performance-based adaptive recommendations."}
+                </p>
+              </div>
+              <Link
+                href={targetRole ? "/dashboard/student/learn" : "/dashboard/student/roles"}
+                className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm"
+              >
+                <span>{targetRole ? "Start Learning" : "Select Role"}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           )}
 
-          {/* Career Path CTA */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl border border-transparent shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
-            <div>
-              <h3 className="text-xl font-bold mb-1">Choose Your Career Path</h3>
-              <p className="text-blue-100 text-sm max-w-lg">
-                Not sure what to learn next? Explore our structured career roadmaps to guide your learning and practice journey towards your dream role.
-              </p>
+          {/* Career Path Banner */}
+          {targetRole ? (
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl border border-transparent shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
+              <div>
+                <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/40 text-blue-100 mb-2 uppercase tracking-wide">
+                  Active Career Path
+                </div>
+                <h3 className="text-xl font-bold mb-1">{targetRole.title}</h3>
+                <p className="text-blue-100 text-sm max-w-lg">
+                  {targetRole.description || "Master industry-standard skills and advance through progressive learning modules, coding practice, and verification assessments."}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link 
+                  href="/dashboard/student/skills" 
+                  className="shrink-0 px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  View Skills
+                </Link>
+                <Link 
+                  href="/dashboard/student/roles" 
+                  className="shrink-0 px-4 py-2 bg-white text-blue-700 font-bold text-sm rounded-lg hover:bg-blue-50 transition-colors shadow-sm"
+                >
+                  Change Path
+                </Link>
+              </div>
             </div>
-            <Link 
-              href="/dashboard/student/roles" 
-              className="shrink-0 px-5 py-2.5 bg-white text-blue-700 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-sm"
-            >
-              Explore Paths
-            </Link>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl border border-transparent shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white">
+              <div>
+                <h3 className="text-xl font-bold mb-1">Choose Your Career Path</h3>
+                <p className="text-blue-100 text-sm max-w-lg">
+                  Not sure what to learn next? Explore our structured career roadmaps to guide your learning and practice journey towards your dream role.
+                </p>
+              </div>
+              <Link 
+                href="/dashboard/student/roles" 
+                className="shrink-0 px-5 py-2.5 bg-white text-blue-700 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-sm"
+              >
+                Explore Paths
+              </Link>
+            </div>
+          )}
 
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

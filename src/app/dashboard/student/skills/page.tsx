@@ -73,6 +73,8 @@ export default function MySkillsPage() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [practiceAttempts, setPracticeAttempts] = useState<any[]>([]);
   const [skillScores, setSkillScores] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
+  const [practiceProblems, setPracticeProblems] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   
   const [loading, setLoading] = useState(true);
@@ -94,22 +96,42 @@ export default function MySkillsPage() {
 
         // 2. Fetch all active skills
         const skillsSnap = await getDocs(query(collection(db, "skills"), where("active", "==", true)));
-        const skillsData = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Skill));
+        const skillsData = skillsSnap.docs.map(d => ({ 
+          id: d.id, 
+          hasCatalog: d.data().hasCatalog ?? (d.id !== 'ml-basics'),
+          ...d.data() 
+        } as Skill & { hasCatalog?: boolean }));
+        
+        // Prioritize catalog skills
+        skillsData.sort((a, b) => {
+          if (a.hasCatalog && !b.hasCatalog) return -1;
+          if (!a.hasCatalog && b.hasCatalog) return 1;
+          return a.name.localeCompare(b.name);
+        });
         setAllSkills(skillsData);
 
-        // 3. Fetch assessments for selected skills
+        // 3. Fetch content for selected skills
         if (studentSkills.length > 0) {
-          // Note: Firestore 'in' query has a limit of 10, fine for MVP
-          const assessmentsSnap = await getDocs(
-            query(collection(db, "assessments"), where("active", "==", true), where("skillId", "in", studentSkills.slice(0, 10)))
-          );
+          const querySkills = studentSkills.slice(0, 10);
+
+          const [assessmentsSnap, tasksSnap, topicsSnap, practiceProblemsSnap] = await Promise.all([
+            getDocs(query(collection(db, "assessments"), where("active", "==", true), where("skillId", "in", querySkills))),
+            getDocs(query(collection(db, "practicalTasks"), where("active", "==", true), where("skillId", "in", querySkills))),
+            getDocs(query(collection(db, "learningTopics"), where("active", "==", true), where("skillId", "in", querySkills))),
+            getDocs(query(collection(db, "practiceProblems"), where("active", "==", true), where("skillId", "in", querySkills)))
+          ]);
+
           const loadedAssessments = assessmentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Assessment));
           setAssessments(loadedAssessments);
 
-          const tasksSnap = await getDocs(
-            query(collection(db, "practicalTasks"), where("active", "==", true), where("skillId", "in", studentSkills.slice(0, 10)))
-          );
-          setPracticalTasks(tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticalTask)));
+          const loadedTasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticalTask));
+          setPracticalTasks(loadedTasks);
+
+          const topicsList = topicsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setTopics(topicsList);
+
+          const problemsList = practiceProblemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          setPracticeProblems(problemsList);
 
           // Fetch question counts for these assessments
           const counts: Record<string, number> = {};
@@ -164,18 +186,24 @@ export default function MySkillsPage() {
       
       setSelectedSkillIds(newSkills);
 
-      // Re-fetch assessments for new skills
+      // Re-fetch content for new skills
       if (newSkills.length > 0) {
-        const assessmentsSnap = await getDocs(
-          query(collection(db, "assessments"), where("active", "==", true), where("skillId", "in", newSkills.slice(0, 10)))
-        );
+        const querySkills = newSkills.slice(0, 10);
+        const [assessmentsSnap, tasksSnap, topicsSnap, practiceProblemsSnap] = await Promise.all([
+          getDocs(query(collection(db, "assessments"), where("active", "==", true), where("skillId", "in", querySkills))),
+          getDocs(query(collection(db, "practicalTasks"), where("active", "==", true), where("skillId", "in", querySkills))),
+          getDocs(query(collection(db, "learningTopics"), where("active", "==", true), where("skillId", "in", querySkills))),
+          getDocs(query(collection(db, "practiceProblems"), where("active", "==", true), where("skillId", "in", querySkills)))
+        ]);
+
         const loadedAssessments = assessmentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Assessment));
         setAssessments(loadedAssessments);
         
-        const tasksSnap = await getDocs(
-          query(collection(db, "practicalTasks"), where("active", "==", true), where("skillId", "in", newSkills.slice(0, 10)))
-        );
-        setPracticalTasks(tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticalTask)));
+        const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as PracticalTask));
+        setPracticalTasks(tasks);
+
+        setTopics(topicsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setPracticeProblems(practiceProblemsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         
         // Fetch question counts for these assessments
         const counts: Record<string, number> = {};
@@ -189,6 +217,8 @@ export default function MySkillsPage() {
       } else {
         setAssessments([]);
         setPracticalTasks([]);
+        setTopics([]);
+        setPracticeProblems([]);
       }
     } catch (error) {
       console.error("Error toggling skill:", error);
@@ -239,7 +269,18 @@ export default function MySkillsPage() {
                     }`}
                   >
                     <div>
-                      <h3 className="font-medium text-sm text-gray-900">{skill.name}</h3>
+                      <div className="flex items-center">
+                        <h3 className="font-medium text-sm text-gray-900">{skill.name}</h3>
+                        {(skill as any).hasCatalog === false ? (
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                            In Dev
+                          </span>
+                        ) : (
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">{skill.category}</p>
                     </div>
                     <button
@@ -299,14 +340,29 @@ export default function MySkillsPage() {
                     const skillTasks = practicalTasks.filter(t => t.skillId === skill.id);
                     const hasActiveTasks = skillTasks.length > 0;
                     
-                    const isComingSoon = !hasActiveAssessment && !hasActiveTasks;
+                    const skillTopics = topics.filter(t => (t as any).skillId === skill.id);
+                    const skillProblems = practiceProblems.filter(p => (p as any).skillId === skill.id);
+                    
+                    const hasAnyContent = hasActiveAssessment || hasActiveTasks || skillTopics.length > 0 || skillProblems.length > 0;
+                    const isComingSoon = !hasAnyContent;
                     
                     return (
                       <div key={skill.id} className="border border-gray-200 shadow-sm rounded-xl p-6 bg-white transition-all hover:border-blue-200 relative overflow-hidden">
                         
                         <div className="flex justify-between items-start mb-6">
                           <div>
-                            <h3 className="font-bold text-xl text-gray-900">{skill.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-xl text-gray-900">{skill.name}</h3>
+                              {hasAnyContent ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Catalog Active
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                  Curriculum in Development
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-500 mt-1">{skill.category}</p>
                           </div>
                           
@@ -327,15 +383,17 @@ export default function MySkillsPage() {
                             return (
                               <div className="flex flex-col items-end">
                                 <StateBadge state={journeyState} />
-                                <Link 
-                                  href={nextAction.href}
-                                  className={`mt-3 inline-flex items-center text-sm font-medium transition-colors ${
-                                    nextAction.type === 'primary' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-600 hover:text-gray-800'
-                                  }`}
-                                >
-                                  {nextAction.label}
-                                  <ArrowRight className="ml-1 w-4 h-4" />
-                                </Link>
+                                {hasAnyContent && (
+                                  <Link 
+                                    href={nextAction.href}
+                                    className={`mt-3 inline-flex items-center text-sm font-medium transition-colors ${
+                                      nextAction.type === 'primary' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                                  >
+                                    {nextAction.label}
+                                    <ArrowRight className="ml-1 w-4 h-4" />
+                                  </Link>
+                                )}
                               </div>
                             );
                           })()}
@@ -349,14 +407,14 @@ export default function MySkillsPage() {
                                 className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                               >
                                 <BookOpen className="h-4 w-4 mr-2" />
-                                Learning Resources
+                                Learning Modules ({skillTopics.length})
                               </Link>
                               <Link 
                                 href={`/dashboard/student/practice?skillId=${skill.id}`}
                                 className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                               >
                                 <Terminal className="h-4 w-4 mr-2" />
-                                Coding Practice
+                                Coding Practice ({skillProblems.length})
                               </Link>
                             </div>
 
@@ -445,15 +503,28 @@ export default function MySkillsPage() {
                             )}
                           </div>
                         ) : (
-                          <div className="bg-gray-50 p-4 rounded-md border border-gray-200 opacity-70">
-                            <h4 className="font-semibold text-gray-900 mb-1">Content</h4>
-                            <div className="flex items-center text-xs text-gray-500 mb-3">
-                              <span className="flex items-center text-orange-600 font-medium">
-                                Coming Soon
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between mt-4">
-                              <span className="text-sm text-gray-500 italic">We are working on adding content for this skill.</span>
+                          <div className="bg-amber-50/50 p-5 rounded-lg border border-amber-200">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 bg-amber-100 rounded-lg text-amber-700 mt-0.5">
+                                <BookOpen className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 mb-1">Curriculum in Development</h4>
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Learning modules and practice exercises for {skill.name} are currently in development.
+                                  To start learning immediately with active coding problems and assessments, choose from our available career paths:
+                                  <span className="font-medium text-gray-800"> Frontend, Backend, or Full Stack Development</span>.
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <Link
+                                    href="/dashboard/student/roles"
+                                    className="inline-flex items-center px-3.5 py-2 border border-amber-300 shadow-sm text-sm font-medium rounded-md text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors"
+                                  >
+                                    Explore Career Paths
+                                    <ArrowRight className="ml-1.5 w-4 h-4" />
+                                  </Link>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}

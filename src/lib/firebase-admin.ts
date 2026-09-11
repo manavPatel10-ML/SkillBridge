@@ -22,7 +22,7 @@ if (getApps().length === 0) {
     process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const isProduction = process.env.NODE_ENV === 'production';
 
-  if (serviceAccountStr) {
+  if (serviceAccountStr && serviceAccountStr !== '[SENSITIVE]' && serviceAccountStr !== '"[SENSITIVE]"') {
     // Production / CI: full service account JSON provided as env var.
     try {
       const serviceAccount = JSON.parse(serviceAccountStr);

@@ -204,20 +204,20 @@ export default function AssessmentsPage() {
                       <Clock className="w-8 h-8 text-orange-500" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Coming Soon</h3>
-                      <p className="text-sm text-gray-500 mt-2 max-w-[200px] mx-auto">
-                        We're building the assessment for this skill.
+                      <h3 className="text-lg font-bold text-gray-900">Curriculum in Development</h3>
+                      <p className="text-sm text-gray-500 mt-2 max-w-[240px] mx-auto">
+                        Assessments for this skill are in development. Explore our active Frontend, Backend, or Full Stack tracks.
                       </p>
                     </div>
                   </div>
                   
                   <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-                    <button
-                      disabled
-                      className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-200 cursor-not-allowed"
+                    <Link
+                      href="/dashboard/student/roles"
+                      className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                     >
-                      Coming Soon
-                    </button>
+                      Explore Career Tracks
+                    </Link>
                   </div>
                 </div>
               );
