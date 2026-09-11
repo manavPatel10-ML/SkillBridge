@@ -342,33 +342,34 @@ The following features are non-core and must **NOT** be built until the core loo
 
 ## 19. New Core Development Roadmap
 
-Moving forward, development will strictly follow the **CORE Roadmap**:
+Moving forward, development strictly follows the **CORE Roadmap**:
 
 ```
-CORE-1: Core Student Skill Journey Polish
-        ├── Ensure instant seamless transition from Career Path Selection -> Learning -> Practice
-        └── Streamline the coding practice experience with immediate test runner feedback
+CORE-1: Build the Shareable Verified SkillBridge Profile [COMPLETED - PASS]
+        ├── Built secure public profile route (/profile/[studentId]) with Next.js SSR
+        ├── Authoritative skillScores source of truth (zero duplicate collections)
+        ├── Showcases verified badges, score breakdowns, GitHub links, and live demos
+        ├── Implemented one-click profile link copying and LinkedIn sharing controls
+        ├── Added verified profile preview cards to student profile and readiness hub
+        ├── Added public profile viewing link to company student detail view
+        ├── Zero-leakage security model (never exposes email, auth tokens, or ML telemetry)
+        └── Full automated regression suite passed (scripts/test_core1_public_profile.ts)
 
-CORE-2: Public Verified Student Profile
-        ├── Build public, shareable profile view (/profile/[studentId])
-        ├── Showcase verified skill badges, GitHub evidence, and live project demos
-        └── Generate one-click LinkedIn and resume sharing cards
+CORE-2: Company Talent Discovery & Shortlisting Experience [NEXT]
+        ├── Build dedicated Candidate Shortlist drawer for hiring managers
+        ├── Add role-based candidate search presets (e.g. "Junior Frontend Candidates ready to hire")
+        └── Streamline challenge invitation workflow
 
 CORE-3: Automated Practical Project Verification
         ├── Build automated rubric grading for core practical tasks
         └── Enable automated verification of basic full-stack projects upon passing test suites
 
-CORE-4: Company Talent Discovery & Shortlisting Experience
-        ├── Build dedicated Candidate Shortlist drawer for hiring managers
-        ├── Add role-based candidate search presets (e.g. "Junior Frontend Candidates ready to hire")
-        └── Streamline challenge invitation workflow
-
-CORE-5: End-to-End Pilot Simulation & Usability QA
+CORE-4: End-to-End Pilot Simulation & Usability QA
         ├── Execute simulated candidate-to-hire journey without fake production data
         ├── Verify complete notification and status synchronization between student and employer
         └── Complete end-to-end audit with verified test accounts
 
-CORE-6: Controlled Beta Pilot Launch
+CORE-5: Controlled Beta Pilot Launch
         ├── Onboard initial batch of 20 pilot students
         ├── Onboard 2 partner companies for talent review
         └── Monitor real engagement and hiring feedback

@@ -309,6 +309,14 @@ export default function StudentDetailView({ params }: Props) {
           <p className="text-gray-700 max-w-2xl">{profile?.shortBio}</p>
 
           <div className="flex flex-wrap gap-4 pt-2">
+            <Link
+              href={`/profile/${studentId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-200"
+            >
+              <Award className="w-4 h-4 mr-2 text-indigo-600" /> Shareable Public Profile
+            </Link>
             <a href={`mailto:${email}`} className="inline-flex items-center text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
               <Mail className="w-4 h-4 mr-2 text-gray-500" /> Contact
             </a>

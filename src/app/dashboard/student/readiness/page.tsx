@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
-import { Loader2, Target, CheckCircle2, Circle, ArrowRight, PlayCircle, BookOpen, Briefcase, Activity, AlertCircle, Code, MessageSquare } from "lucide-react";
+import { Loader2, Target, CheckCircle2, Circle, ArrowRight, PlayCircle, BookOpen, Briefcase, Activity, AlertCircle, Code, MessageSquare, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RolePath, StudentSkillScore, PracticeAttempt, CompanyChallenge, ChallengeApplication, LearningTopic, PracticeProblem } from "@/types";
@@ -234,18 +234,31 @@ export default function JobReadinessHub() {
           <p className="text-gray-500 mt-1">Track your progress from learning to getting hired.</p>
         </div>
         
-        <div className="w-full sm:w-64">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Target Career Role</label>
-          <select
-            value={selectedRoleId}
-            onChange={handleRoleSelect}
-            className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border bg-white"
-          >
-            <option value="">-- Select a Career Path --</option>
-            {roles.map(r => (
-              <option key={r.id} value={r.id}>{r.title}</option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+          {user && (
+            <Link
+              href={`/profile/${user.uid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors h-10"
+            >
+              <span>View Public Profile</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          )}
+          <div className="w-full sm:w-64">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Target Career Role</label>
+            <select
+              value={selectedRoleId}
+              onChange={handleRoleSelect}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border bg-white"
+            >
+              <option value="">-- Select a Career Path --</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.title}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
