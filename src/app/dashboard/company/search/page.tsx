@@ -3,11 +3,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { Loader2, Search, GraduationCap, Filter, Award, Code, CheckCircle, ChevronRight, AlertCircle, Lock } from "lucide-react";
+import { Loader2, Search, GraduationCap, Filter, Award, Code, CheckCircle, ChevronRight, AlertCircle, Lock, Zap, ExternalLink, Globe } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
+import { isCandidateStrongMatch } from "@/lib/candidate-matching";
 
 type StudentData = {
   id: string;
@@ -20,6 +21,8 @@ type StudentData = {
   displayTheoryScore: number | null;
   displayPracticalScore: number | null;
   displaySkillIds: string[];
+  matchedChallenges: string[]; // Challenge titles for which student is Strong Match
+  hasProjectEvidence: boolean;
 };
 
 type Skill = {
@@ -45,6 +48,9 @@ export default function TalentDiscoveryPage() {
   const [minTheoryScore, setMinTheoryScore] = useState(0);
   const [minPracticalScore, setMinPracticalScore] = useState(0);
   const [requireVerified, setRequireVerified] = useState(false);
+  const [onlyStrongMatch, setOnlyStrongMatch] = useState(false);
+  const [onlyWithEvidence, setOnlyWithEvidence] = useState(false);
+  const [companyChallenges, setCompanyChallenges] = useState<any[]>([]);
 
   // 1. Fetch Subscription Status & Skills
   useEffect(() => {
@@ -63,6 +69,16 @@ export default function TalentDiscoveryPage() {
           skillsArray.push({ id: d.id, name: d.data().name });
         });
         setSkills(skillsArray.sort((a, b) => a.name.localeCompare(b.name)));
+
+        // Fetch company challenges to compute Strong Matches
+        const challengesSnap = await getDocs(
+          query(collection(db, "companyChallenges"), where("companyId", "==", user.uid), where("status", "==", "published"))
+        );
+        const challengesList: any[] = [];
+        challengesSnap.forEach(d => {
+          challengesList.push({ id: d.id, ...d.data() });
+        });
+        setCompanyChallenges(challengesList);
       } catch (err) {
         console.error("Error fetching init data:", err);
         setSubscriptionChecked(true);
@@ -193,6 +209,32 @@ export default function TalentDiscoveryPage() {
         displayPractical = pCount > 0 ? pSum / pCount : 0;
       }
 
+      // Check Strong Match against company's published challenges
+      const verifiedSkillSet = new Set<string>(
+        studentScores.filter(s => s.isVerified).map(s => s.skillId)
+      );
+
+      const matchedChallenges: string[] = [];
+      companyChallenges.forEach(c => {
+        if (c.requiredSkillIds && c.requiredSkillIds.length > 0) {
+          if (isCandidateStrongMatch(c.requiredSkillIds, verifiedSkillSet)) {
+            matchedChallenges.push(c.title);
+          }
+        }
+      });
+
+      const hasProjectEvidence = studentScores.some(s => 
+        s.projectEvidence && (s.projectEvidence.githubUrl || s.projectEvidence.liveUrl)
+      );
+
+      if (onlyStrongMatch && matchedChallenges.length === 0) {
+        return;
+      }
+
+      if (onlyWithEvidence && !hasProjectEvidence) {
+        return;
+      }
+
       results.push({
         id: uid,
         fullName: profile.fullName || "Anonymous Student",
@@ -204,12 +246,14 @@ export default function TalentDiscoveryPage() {
         displayTheoryScore: displayTheory > 0 ? Math.round(displayTheory) : null,
         displayPracticalScore: displayPractical > 0 ? Math.round(displayPractical) : null,
         displaySkillIds: Array.from(displaySkillIds),
+        matchedChallenges,
+        hasProjectEvidence,
       });
     });
 
     // Sort by overall score descending
     return results.sort((a, b) => (b.displayOverallScore || 0) - (a.displayOverallScore || 0));
-  }, [rawScores, rawProfiles, searchQuery, selectedSkill, minOverallScore, minTheoryScore, minPracticalScore, requireVerified]);
+  }, [rawScores, rawProfiles, searchQuery, selectedSkill, minOverallScore, minTheoryScore, minPracticalScore, requireVerified, onlyStrongMatch, onlyWithEvidence, companyChallenges]);
 
   const getSkillName = (id: string) => {
     return skills.find(s => s.id === id)?.name || id;
@@ -336,16 +380,44 @@ export default function TalentDiscoveryPage() {
             />
           </div>
 
-          <div className="flex items-center">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input 
-                type="checkbox"
-                checked={requireVerified}
-                onChange={(e) => setRequireVerified(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Only Verified</span>
-            </label>
+          <div className="flex flex-col gap-2 justify-center">
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={requireVerified}
+                  onChange={(e) => setRequireVerified(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-xs font-semibold text-gray-700">Verified Only</span>
+              </label>
+
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={onlyStrongMatch}
+                  onChange={(e) => setOnlyStrongMatch(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                />
+                <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                  Strong Match Only
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={onlyWithEvidence}
+                  onChange={(e) => setOnlyWithEvidence(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-semibold text-indigo-800 flex items-center gap-1">
+                  <Code className="w-3.5 h-3.5 text-indigo-600" />
+                  Has Project Evidence
+                </span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -359,9 +431,9 @@ export default function TalentDiscoveryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredStudents.length > 0 ? (
             filteredStudents.map(student => (
-              <div key={student.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:border-blue-300 transition-colors flex flex-col">
+              <div key={student.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:border-blue-300 transition-colors flex flex-col justify-between">
                 <div className="p-6 flex-1">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-2">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
                         {student.fullName.charAt(0).toUpperCase()}
@@ -374,13 +446,34 @@ export default function TalentDiscoveryPage() {
                         </p>
                       </div>
                     </div>
+
+                    {student.matchedChallenges.length > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                        <Zap className="w-3 h-3 mr-1 text-emerald-600" />
+                        Strong Match
+                      </span>
+                    )}
                   </div>
 
-                  <p className="mt-4 text-sm text-gray-600 line-clamp-2 min-h-[2.5rem]">
+                  {student.matchedChallenges.length > 0 && (
+                    <div className="mt-3 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="truncate">Vacancy Match: <strong>{student.matchedChallenges[0]}</strong></span>
+                    </div>
+                  )}
+
+                  {student.hasProjectEvidence && (
+                    <div className="mt-2 text-xs text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                      <span>Verified Practical Build Evidence Available</span>
+                    </div>
+                  )}
+
+                  <p className="mt-3 text-sm text-gray-600 line-clamp-2 min-h-[2.5rem]">
                     {student.bio}
                   </p>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2 text-center divide-x divide-gray-100 bg-gray-50 rounded-lg py-2 border border-gray-100">
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center divide-x divide-gray-100 bg-gray-50 rounded-lg py-2 border border-gray-100">
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Overall</div>
                       <div className="font-bold text-gray-900 text-lg flex items-center justify-center">
@@ -425,12 +518,21 @@ export default function TalentDiscoveryPage() {
                   )}
                 </div>
                 
-                <div className="border-t border-gray-100 p-4 bg-gray-50">
+                <div className="border-t border-gray-100 p-3 bg-gray-50 flex items-center justify-between gap-2">
+                  <Link 
+                    href={`/profile/${student.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-700 py-1"
+                  >
+                    <Award className="w-3.5 h-3.5 mr-1" /> Public Profile <ExternalLink className="w-3 h-3 ml-0.5 opacity-60" />
+                  </Link>
+
                   <Link 
                     href={`/dashboard/company/student/${student.id}`}
-                    className="w-full flex items-center justify-center text-blue-600 font-medium hover:text-blue-700 text-sm"
+                    className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-700 bg-white px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
                   >
-                    View Full Profile <ChevronRight className="w-4 h-4 ml-1" />
+                    View Full Profile <ChevronRight className="w-3.5 h-3.5 ml-1" />
                   </Link>
                 </div>
               </div>
@@ -441,7 +543,7 @@ export default function TalentDiscoveryPage() {
               <h3 className="text-lg font-bold text-gray-900">No students found</h3>
               <p className="text-gray-500 mt-1">Try adjusting your filters or search query.</p>
               <button 
-                onClick={() => { setSearchQuery(""); setSelectedSkill(""); setMinOverallScore(0); setMinTheoryScore(0); setMinPracticalScore(0); setRequireVerified(false); }}
+                onClick={() => { setSearchQuery(""); setSelectedSkill(""); setMinOverallScore(0); setMinTheoryScore(0); setMinPracticalScore(0); setRequireVerified(false); setOnlyStrongMatch(false); setOnlyWithEvidence(false); }}
                 className="mt-4 px-4 py-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 font-medium text-sm transition-colors"
               >
                 Clear all filters

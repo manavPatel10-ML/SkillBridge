@@ -21,7 +21,7 @@ export default function CompanyDashboard() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ activeChallenges: 0, totalApplications: 0, hiredCandidates: 0 });
+  const [stats, setStats] = useState({ activeChallenges: 0, totalApplications: 0, hiredCandidates: 0, shortlistedCandidates: 0 });
   const [recentApplications, setRecentApplications] = useState<any[]>([]);
 
   useEffect(() => {
@@ -56,20 +56,25 @@ export default function CompanyDashboard() {
         
         const rawApps: ChallengeApplication[] = [];
         let hiredCount = 0;
+        let shortlistedCount = 0;
         
         appsSnap.forEach(doc => {
           const data = doc.data() as ChallengeApplication;
           data.id = doc.id;
           rawApps.push(data);
-          if (data.status === 'shortlisted') {
+          if (data.status === 'hired') {
             hiredCount++;
+          }
+          if (data.status === 'shortlisted') {
+            shortlistedCount++;
           }
         });
 
         setStats({
           activeChallenges: activeCount,
           totalApplications: rawApps.length,
-          hiredCandidates: hiredCount
+          hiredCandidates: hiredCount,
+          shortlistedCandidates: shortlistedCount
         });
 
         // For recent applications, we need student names
@@ -125,7 +130,9 @@ export default function CompanyDashboard() {
       case 'submitted':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Submitted</span>;
       case 'shortlisted':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/> Shortlisted</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><CheckCircle className="w-3 h-3 mr-1"/> Shortlisted</span>;
+      case 'hired':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800"><CheckCircle className="w-3 h-3 mr-1"/> Hired</span>;
       case 'rejected':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><AlertCircle className="w-3 h-3 mr-1"/> Rejected</span>;
       case 'completed':
@@ -162,20 +169,24 @@ export default function CompanyDashboard() {
         </div>
       </div>
 
-      {profile?.verificationStatus === "pending" && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start">
-          <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
-          <div>
-            <h3 className="text-sm font-medium text-amber-800">Account Pending Verification</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              Your company profile is currently being reviewed. You can create challenges, but they won't be visible to students until verification is complete.
-            </p>
+      {profile && !profile.verified && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-amber-700 font-medium">Profile Pending Verification</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Your company profile is currently being reviewed. You can create challenges, but they won't be visible to students until verification is complete.
+              </p>
+            </div>
           </div>
         </div>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
@@ -203,10 +214,22 @@ export default function CompanyDashboard() {
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
+              <p className="text-sm font-medium text-gray-500">Shortlisted</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.shortlistedCandidates}</h3>
+            </div>
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <Briefcase className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <div>
               <p className="text-sm font-medium text-gray-500">Hired Candidates</p>
               <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.hiredCandidates}</h3>
             </div>
-            <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
               <CheckCircle className="w-5 h-5" />
             </div>
           </div>

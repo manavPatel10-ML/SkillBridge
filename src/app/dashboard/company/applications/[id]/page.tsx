@@ -19,7 +19,9 @@ import {
   Mail,
   Code,
   MessageSquare,
-  BookOpen
+  BookOpen,
+  Award,
+  ExternalLink
 } from "lucide-react";
 
 export default function ApplicationDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -275,6 +277,25 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
               <div className="flex items-center text-sm text-gray-500 mt-2 space-x-4">
                 <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1" /> {challenge.title}</span>
                 <span className="flex items-center"><Mail className="w-4 h-4 mr-1" /> {student.email}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <Link
+                  href={`/profile/${application.studentId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md border border-indigo-200 transition-colors"
+                >
+                  <Award className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Public Verified Profile</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </Link>
+                <Link
+                  href={`/dashboard/company/student/${application.studentId}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Full Candidate Portfolio</span>
+                </Link>
               </div>
             </div>
             
