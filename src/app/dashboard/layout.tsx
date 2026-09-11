@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Link from "next/link";
@@ -23,12 +24,15 @@ import {
   Library,
   Map,
   Target,
-  Zap
+  Zap,
+  Menu,
+  X
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { role, signOut, user } = useAuth();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const studentLinks = [
     { name: "Overview", href: "/dashboard/student", icon: LayoutDashboard },
@@ -133,17 +137,87 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Mobile Header */}
           <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-            <Link href="/" className="flex items-center font-bold text-xl text-blue-600">
-              <GraduationCap className="h-6 w-6 mr-2" />
-              SkillBridge
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none"
+                aria-label="Toggle Navigation Menu"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+              <Link href="/" className="flex items-center font-bold text-xl text-blue-600">
+                <GraduationCap className="h-6 w-6 mr-2" />
+                SkillBridge
+              </Link>
+            </div>
             <button
               onClick={signOut}
               className="p-2 text-red-600 hover:bg-red-50 rounded-md"
+              title="Sign Out"
             >
               <LogOut className="h-5 w-5" />
             </button>
           </header>
+
+          {/* Mobile Navigation Drawer */}
+          {mobileMenuOpen && (
+            <div 
+              className="md:hidden fixed inset-0 z-40 bg-black/50" 
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div 
+                className="w-64 bg-white h-full flex flex-col shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
+                  <Link 
+                    href="/" 
+                    className="flex items-center font-bold text-xl text-blue-600" 
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <GraduationCap className="h-6 w-6 mr-2" />
+                    SkillBridge
+                  </Link>
+                  <button 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                  {links.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = pathname === link.href;
+                    return (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          isActive
+                            ? "bg-blue-50 text-blue-700"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <Icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isActive ? "text-blue-700" : "text-gray-400"}`} />
+                        {link.name}
+                      </Link>
+                    );
+                  })}
+                </nav>
+                <div className="p-4 border-t border-gray-200">
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); signOut(); }}
+                    className="flex w-full items-center px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="mr-3 h-5 w-5 text-red-500" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             {children}
