@@ -168,6 +168,9 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Execution API error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal Server Error',
+      details: error?.message || String(error)
+    }, { status: 500 });
   }
 }
