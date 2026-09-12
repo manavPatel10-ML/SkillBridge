@@ -73,14 +73,14 @@ export default function AssessmentsPage() {
         });
         setSkills(skillsMap);
 
-        // Filter assessments based on student's selected skills
-        const availableAssessments = assessmentsData.filter(
-          (assessment) => selectedSkills.includes(assessment.skillId)
-        );
+        // Filter assessments based on student's selected skills if set, otherwise show all active assessments
+        const availableAssessments = selectedSkills.length > 0
+          ? assessmentsData.filter((assessment) => selectedSkills.includes(assessment.skillId))
+          : assessmentsData;
         
         console.log("Student selected skills:", selectedSkills);
-        console.log("Loaded assessments:", assessmentsData);
-        console.log("Filtered assessments:", availableAssessments);
+        console.log("Loaded assessments:", assessmentsData.length);
+        console.log("Available assessments:", availableAssessments.length);
 
         // Fetch question counts for these assessments
         const counts: Record<string, number> = {};
@@ -104,7 +104,11 @@ export default function AssessmentsPage() {
     fetchData();
   }, [user]);
 
-  const filteredSkillIds = studentSkillIds.filter(skillId => {
+  const baseSkillIds = studentSkillIds.length > 0
+    ? studentSkillIds
+    : Array.from(new Set(assessments.map(a => a.skillId)));
+
+  const filteredSkillIds = baseSkillIds.filter(skillId => {
     const skill = skills[skillId];
     const assessment = assessments.find(a => a.skillId === skillId);
     const search = searchTerm.toLowerCase();
@@ -228,18 +232,18 @@ export default function AssessmentsPage() {
             <Filter className="w-12 h-12 text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900">No assessments found</h3>
             <p className="mt-1 text-gray-500">
-              {studentSkillIds.length === 0 
-                ? "You haven't added any skills yet. Go to My Skills to add some."
+              {assessments.length === 0 
+                ? "No assessments are currently available in the catalog."
                 : "No assessments match your search criteria."}
             </p>
-            {studentSkillIds.length === 0 && (
+            {assessments.length === 0 && (
               <div className="mt-6">
                 <Link
                   href="/dashboard/student/skills"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
                 >
                   <BookOpen className="w-4 h-4 mr-2" />
-                  Add Skills
+                  Explore Skills
                 </Link>
               </div>
             )}

@@ -144,6 +144,11 @@ export default function StudentDashboard() {
           activeSkillIds = profileData.selectedSkills;
         }
 
+        // Global fallback: Ensure any student with an uninitialized profile sees foundational career skills
+        if (activeSkillIds.length === 0) {
+          activeSkillIds = ["html-css", "javascript", "react", "git-github"];
+        }
+
         if (activeSkillIds.length > 0) {
           // Chunk the skills array if it exceeds Firestore's 10-item limit for 'in' queries
           const querySkills = activeSkillIds.slice(0, 10);

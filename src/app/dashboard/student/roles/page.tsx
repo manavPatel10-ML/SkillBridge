@@ -6,12 +6,16 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { Loader2, Map, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { RolePath } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StudentRolesPage() {
+  const { user } = useAuth();
   const [roles, setRoles] = useState<RolePath[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchRoles = async () => {
       try {
         const q = query(collection(db, "roles"), where("active", "==", true));
@@ -26,7 +30,7 @@ export default function StudentRolesPage() {
     };
     
     fetchRoles();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (

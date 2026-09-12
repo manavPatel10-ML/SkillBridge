@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { RecommendedTask } from "@/types";
 import { Loader2, Zap, GraduationCap } from "lucide-react";
 import Link from "next/link";
@@ -30,14 +31,32 @@ export default function StudentLearningPathPage() {
         });
         
         if (!res.ok) {
-          throw new Error('Failed to fetch recommendations');
+          throw new Error('Failed to fetch recommendations from server');
         }
         
         const data = await res.json();
         setRecommendations(data.recommendations || []);
       } catch (err: any) {
-        console.error("Error generating recommendations:", err);
-        setError(err.message || "Failed to load adaptive learning path.");
+        console.warn("Recommendations API returned an error, falling back to catalog progression:", err);
+        try {
+          const topicsSnap = await getDocs(query(collection(db, "learningTopics"), where("active", "==", true)));
+          const topics = topicsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          topics.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          const fallbackRecs: RecommendedTask[] = topics.slice(0, 4).map((t: any, idx: number) => ({
+            id: `rec_fallback_${t.id}`,
+            recommendationId: `rec_fallback_${t.id}`,
+            title: t.title,
+            description: t.overview || `Master key concept ${t.title}`,
+            type: 'learning' as const,
+            skillId: t.skillId,
+            itemId: t.id,
+            reason: `Foundational concept in ${t.topic || 'Web Development'} track`,
+            priorityScore: 100 - idx * 10
+          }));
+          setRecommendations(fallbackRecs);
+        } catch (fbErr: any) {
+          setError(err.message || "Failed to load adaptive learning path.");
+        }
       } finally {
         setLoading(false);
       }

@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { Loader2, Library, BookOpen, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { LearningTopic } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Skill = {
   id: string;
@@ -13,11 +14,14 @@ type Skill = {
 };
 
 export default function StudentLearnPage() {
+  const { user } = useAuth();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [topics, setTopics] = useState<LearningTopic[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -40,7 +44,7 @@ export default function StudentLearnPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
