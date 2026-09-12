@@ -13,7 +13,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "emulators": "firebase emulators:start",
-    "test:ci": "npm-run-all --parallel emulators \"test:e2e\" --race"
+    "test:ci": "npm-run-all --parallel emulators \"test:e2e\" --race",
+    "verify:production": "npx tsx scripts/test_production_parity.ts",
+    "deploy:content": "npx tsx scripts/seed_production_catalog.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

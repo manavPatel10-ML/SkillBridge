@@ -26,7 +26,8 @@ if (getApps().length === 0) {
     // Production / CI: full service account JSON provided as env var.
     try {
       const serviceAccount = JSON.parse(serviceAccountStr);
-      initializeApp({ credential: cert(serviceAccount) });
+      const targetProjectId = serviceAccount.project_id || projectId || 'skillbridge-4101d';
+      initializeApp({ credential: cert(serviceAccount), projectId: targetProjectId });
     } catch (error) {
       throw new Error(
         '[Firebase Admin] Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. ' +
