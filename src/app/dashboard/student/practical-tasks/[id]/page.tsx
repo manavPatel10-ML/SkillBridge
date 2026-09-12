@@ -64,14 +64,18 @@ export default function PracticalTaskDetailPage({ params }: Props) {
           const q = query(
             attemptsRef, 
             where("studentId", "==", user.uid),
-            where("taskId", "==", id),
-            orderBy("startedAt", "desc"),
-            limit(1)
+            where("taskId", "==", id)
           );
           
           const attemptSnap = await getDocs(q);
           if (!attemptSnap.empty) {
-            setRecentAttempt({ id: attemptSnap.docs[0].id, ...attemptSnap.docs[0].data() });
+            const sorted = attemptSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            sorted.sort((a: any, b: any) => {
+              const tA = a.startedAt?.seconds || 0;
+              const tB = b.startedAt?.seconds || 0;
+              return tB - tA;
+            });
+            setRecentAttempt(sorted[0]);
           }
         }
       } catch (error) {
