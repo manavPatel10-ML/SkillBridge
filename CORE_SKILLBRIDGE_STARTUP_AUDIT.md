@@ -447,7 +447,7 @@ CORE-5: Controlled Beta Pilot Launch
 |---|---|---|---|
 | **CORE-1** | Public Shareable Verified Profile (`/profile/[studentId]`) | **PASS** | `CORE_1_PUBLIC_PROFILE_REPORT.md` |
 | **CORE-2** | Company Talent Discovery → Hiring Loop (Search, Evidence, Tasks, Evaluation, Hire) | **PASS** | `CORE_2_COMPANY_HIRING_LOOP_REPORT.md` |
-| **CORE-3** | Real Beta Readiness & Production Validation (End-to-End Audit, Performance, Security, Gates) | **PASS (GO)** | `CORE_3_BETA_READINESS_REPORT.md` |
+| **CORE-3** | Real Beta Readiness, Production Content Parity & Validation | **PASS (GO)** | `CORE_3_BETA_READINESS_REPORT.md`, `CORE_PRODUCTION_CONTENT_PARITY_REPORT.md` |
 | **CORE-4** | Dedicated Candidate Shortlist Drawer & Hiring Pipeline Polish | Pending | TBD |
 | **CORE-5** | Controlled Pilot Verification with Partner Accounts | Pending | TBD |
 
