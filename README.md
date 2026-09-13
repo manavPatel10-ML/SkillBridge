@@ -108,3 +108,11 @@ To create an optimized production build:
 ```bash
 npm run build
 ```
+
+## Documentation
+
+Project documentation and architecture reports are organized under the [`docs/`](./docs) directory:
+- Architecture, API, and database references: [`docs/`](./docs)
+- Phase completion and audit reports: [`docs/phases/`](./docs/phases)
+- Historical phase verification suites: [`tests/phases/`](./tests/phases)
+
